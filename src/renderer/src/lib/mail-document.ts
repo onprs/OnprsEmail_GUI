@@ -1,0 +1,4 @@
+export function createMailDocument(html: string, allowRemoteImages: boolean): string {
+  const imageSource = allowRemoteImages ? 'https: data: cid: blob:' : 'data: cid: blob:'
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${imageSource}; style-src 'unsafe-inline'; font-src data:; base-uri 'none'; form-action 'none'"><style>html{color-scheme:light}body{margin:0;padding:22px 24px;font:14px/1.7 Inter,Segoe UI,system-ui,sans-serif;color:#252a27;overflow-wrap:anywhere;background:#fff}img{max-width:100%;height:auto}table{max-width:100%;border-collapse:collapse}pre{white-space:pre-wrap}a{color:#11766c;text-decoration-thickness:1px;text-underline-offset:2px}blockquote{margin-left:0;padding-left:14px;border-left:3px solid #d5ddd8;color:#59635d}</style></head><body>${html}</body></html>`
+}
