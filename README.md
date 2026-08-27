@@ -1,5 +1,7 @@
 # Onprs Mail Desktop
 
+[English](README.en.md) | 中文
+
 面向 `onprs.online` 邮件系统的 Windows 本地客户端。应用通过 HTTPS JMAP 完成邮件收发，并通过 Ingress API 提供全域收件、验证码提取和链接查看能力。
 
 ## 功能
