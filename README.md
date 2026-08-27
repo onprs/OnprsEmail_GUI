@@ -1,10 +1,10 @@
-# Onprs Mail Desktop
+# OnprsEmail_GUI
 
 **简体中文** | [English](README.en.md)
 
 [![CI](https://github.com/onprs/OnprsEmail_GUI/actions/workflows/ci.yml/badge.svg)](https://github.com/onprs/OnprsEmail_GUI/actions/workflows/ci.yml)
 
-Onprs Mail Desktop 是面向 `onprs.online` 邮件系统的 Windows 桌面客户端。它通过基于 HTTPS 的 JMAP 收发邮件，并展示 Ingress API 提取的全域收件内容、验证码和链接。
+OnprsEmail_GUI 是面向 `onprs.online` 邮件系统的 Windows 桌面客户端。它通过基于 HTTPS 的 JMAP 收发邮件，并展示 Ingress API 提取的全域收件内容、验证码和链接。
 
 ## 功能
 

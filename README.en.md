@@ -1,10 +1,10 @@
-# Onprs Mail Desktop
+# OnprsEmail_GUI
 
 [简体中文](README.md) | **English**
 
 [![CI](https://github.com/onprs/OnprsEmail_GUI/actions/workflows/ci.yml/badge.svg)](https://github.com/onprs/OnprsEmail_GUI/actions/workflows/ci.yml)
 
-Onprs Mail Desktop is a Windows client for the `onprs.online` mail system. It sends and receives mail using JMAP over HTTPS and displays catch-all messages, verification codes, and links extracted by the Ingress API.
+OnprsEmail_GUI is a Windows client for the `onprs.online` mail system. It sends and receives mail using JMAP over HTTPS and displays catch-all messages, verification codes, and links extracted by the Ingress API.
 
 ## Features
 
