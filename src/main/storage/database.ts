@@ -122,7 +122,8 @@ export class AppDatabase {
 
   saveAccount(account: StoredAccount): void {
     this.db
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO accounts (
           id, email, display_name, server_url, jmap_account_id, capabilities_json,
           session_json, encrypted_secret, created_at, last_connected_at
@@ -136,7 +137,8 @@ export class AppDatabase {
           session_json = excluded.session_json,
           encrypted_secret = excluded.encrypted_secret,
           last_connected_at = excluded.last_connected_at
-      `)
+      `
+      )
       .run(
         account.id,
         account.email,
@@ -156,18 +158,23 @@ export class AppDatabase {
   }
 
   getPendingSubmissionEmailId(accountId: string): string | null {
-    const row = this.db.prepare('SELECT email_id FROM pending_submissions WHERE account_id = ?').get(accountId) as { email_id?: string } | undefined
+    const row = this.db.prepare('SELECT email_id FROM pending_submissions WHERE account_id = ?').get(accountId) as
+      { email_id?: string } | undefined
     return row?.email_id ?? null
   }
 
   savePendingSubmission(accountId: string, emailId: string): void {
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO pending_submissions (account_id, email_id, created_at)
       VALUES (?, ?, ?)
       ON CONFLICT(account_id) DO UPDATE SET
         email_id = excluded.email_id,
         created_at = excluded.created_at
-    `).run(accountId, emailId, new Date().toISOString())
+    `
+      )
+      .run(accountId, emailId, new Date().toISOString())
   }
 
   clearPendingSubmission(accountId: string): void {
@@ -175,7 +182,9 @@ export class AppDatabase {
   }
 
   getIngressConfiguration(): StoredIngressConfiguration | null {
-    const row = this.db.prepare('SELECT base_url, api_version, encrypted_secret FROM ingress_configuration WHERE id = 1').get() as unknown as IngressRow | undefined
+    const row = this.db
+      .prepare('SELECT base_url, api_version, encrypted_secret FROM ingress_configuration WHERE id = 1')
+      .get() as unknown as IngressRow | undefined
     if (!row) return null
     return {
       configured: true,
@@ -187,14 +196,16 @@ export class AppDatabase {
 
   saveIngressConfiguration(configuration: StoredIngressConfiguration): void {
     this.db
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO ingress_configuration (id, base_url, api_version, encrypted_secret)
         VALUES (1, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           base_url = excluded.base_url,
           api_version = excluded.api_version,
           encrypted_secret = excluded.encrypted_secret
-      `)
+      `
+      )
       .run(configuration.baseUrl, configuration.apiVersion, configuration.encryptedSecret)
   }
 
@@ -212,27 +223,32 @@ export class AppDatabase {
 
   replaceRegistrationCredential(expectedRevision: number, encryptedCode: Uint8Array | null): boolean {
     const result = this.db
-      .prepare(`
+      .prepare(
+        `
         UPDATE registration_credential
         SET encrypted_code = ?, revision = revision + 1
         WHERE id = 1 AND revision = ?
-      `)
+      `
+      )
       .run(encryptedCode, expectedRevision)
     return result.changes === 1
   }
 
   forgetRegistrationCredential(): void {
     this.db
-      .prepare(`
+      .prepare(
+        `
         UPDATE registration_credential
         SET encrypted_code = NULL, revision = revision + 1
         WHERE id = 1
-      `)
+      `
+      )
       .run()
   }
 
   getSettings(): AppSettings {
-    const row = this.db.prepare("SELECT value_json FROM settings WHERE key = 'app'").get() as unknown as { value_json: string } | undefined
+    const row = this.db.prepare("SELECT value_json FROM settings WHERE key = 'app'").get() as unknown as
+      { value_json: string } | undefined
     if (!row) return { ...defaultSettings }
     try {
       return { ...defaultSettings, ...(JSON.parse(row.value_json) as Partial<AppSettings>) }
@@ -243,10 +259,12 @@ export class AppDatabase {
 
   saveSettings(settings: AppSettings): void {
     this.db
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO settings (key, value_json) VALUES ('app', ?)
         ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json
-      `)
+      `
+      )
       .run(JSON.stringify(settings))
   }
 

@@ -23,7 +23,19 @@ dist/
 *.p12
 *.key
 *.jks
+*.cer
+*.crt
 secrets/
+
+# 本地邮件与数据库
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.eml
+*.msg
 
 # 系统与编辑器文件
 .DS_Store

@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: Inter, "Segoe UI", "Microsoft YaHei UI", system-ui, sans-serif;
+  font-family: Inter, 'Segoe UI', 'Microsoft YaHei UI', system-ui, sans-serif;
   font-synthesis: none;
   --bg: #f4f6f3;
   --surface: #ffffff;
@@ -25,7 +25,7 @@
   --rail-width: 58px;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   color-scheme: dark;
   --bg: #171a18;
   --surface: #202421;
@@ -49,7 +49,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
     --bg: #171a18;
     --surface: #202421;
@@ -105,7 +105,7 @@ textarea {
 button,
 select,
 label,
-input[type="checkbox"] {
+input[type='checkbox'] {
   -webkit-app-region: no-drag;
 }
 
@@ -117,7 +117,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-[contenteditable="true"]:focus-visible {
+[contenteditable='true']:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -146,7 +146,9 @@ textarea::placeholder {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .app-frame {
@@ -278,7 +280,7 @@ textarea::placeholder {
   font-size: 13px;
 }
 
-:root[data-theme="dark"] .account-avatar {
+:root[data-theme='dark'] .account-avatar {
   background: #36554e;
   color: #d9f2ec;
 }
@@ -901,9 +903,9 @@ textarea::placeholder {
   font-weight: 750;
 }
 
-:root[data-theme="dark"] .sender-avatar,
-:root[data-theme="dark"] .contact-avatar,
-:root[data-theme="dark"] .recipient-avatar {
+:root[data-theme='dark'] .sender-avatar,
+:root[data-theme='dark'] .contact-avatar,
+:root[data-theme='dark'] .recipient-avatar {
   background: #344c45;
   color: #dcebe6;
 }
@@ -1552,7 +1554,9 @@ textarea::placeholder {
   align-items: center;
   gap: 4px;
   color: var(--amber);
-  font: 700 10px ui-monospace, monospace;
+  font:
+    700 10px ui-monospace,
+    monospace;
 }
 
 .ingress-route {
@@ -1593,7 +1597,10 @@ textarea::placeholder {
 }
 
 .otp-panel > strong {
-  font: 750 24px ui-monospace, "Cascadia Code", monospace;
+  font:
+    750 24px ui-monospace,
+    'Cascadia Code',
+    monospace;
 }
 
 .detected-links {
@@ -2040,7 +2047,7 @@ textarea::placeholder {
 }
 
 .switch::before {
-  content: "";
+  content: '';
   display: block;
   width: 16px;
   height: 16px;
@@ -2259,9 +2266,15 @@ textarea::placeholder {
   font-size: 12px;
 }
 
-.toast-success > svg { color: var(--success); }
-.toast-error > svg { color: var(--danger); }
-.toast-info > svg { color: var(--accent); }
+.toast-success > svg {
+  color: var(--success);
+}
+.toast-error > svg {
+  color: var(--danger);
+}
+.toast-info > svg {
+  color: var(--accent);
+}
 
 @media (max-width: 1220px) {
   .mail-workspace {

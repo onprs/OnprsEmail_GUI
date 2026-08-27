@@ -25,7 +25,9 @@ test('打包后的 Windows 应用可安全启动', async () => {
     await expect(page).toHaveTitle('Onprs Mail')
     expect(page.url()).toBe('app://bundle/index.html')
     await expect(page.getByRole('heading', { name: '登录邮箱' })).toBeVisible()
-    const bridgeAvailable = await page.evaluate(() => typeof (window as unknown as { mailApi?: unknown }).mailApi === 'object')
+    const bridgeAvailable = await page.evaluate(
+      () => typeof (window as unknown as { mailApi?: unknown }).mailApi === 'object'
+    )
     expect(bridgeAvailable).toBe(true)
   } finally {
     await electronApp.close()

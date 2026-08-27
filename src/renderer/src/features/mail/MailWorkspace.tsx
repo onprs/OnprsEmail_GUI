@@ -82,7 +82,9 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
   const [searchDraft, setSearchDraft] = useState('')
   const [search, setSearch] = useState('')
   const [position, setPosition] = useState(0)
-  const [remoteImagesAllowedFor, setRemoteImagesAllowedFor] = useState<{ accountId: string; emailId: string } | null>(null)
+  const [remoteImagesAllowedFor, setRemoteImagesAllowedFor] = useState<{ accountId: string; emailId: string } | null>(
+    null
+  )
   const canSubmit = account.capabilities.includes(JMAP_SUBMISSION)
 
   const mailboxesQuery = useQuery({
@@ -96,13 +98,16 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
   const pageSize = settingsQuery.data?.pageSize ?? 30
   const emailsQuery = useQuery({
     queryKey: ['emails', account.id, activeMailboxId, search, position, pageSize],
-    queryFn: async () => unwrap(await window.mailApi.listEmails({
-      accountId: account.id,
-      mailboxId: activeMailboxId ?? undefined,
-      search: search || undefined,
-      position,
-      limit: pageSize
-    })),
+    queryFn: async () =>
+      unwrap(
+        await window.mailApi.listEmails({
+          accountId: account.id,
+          mailboxId: activeMailboxId ?? undefined,
+          search: search || undefined,
+          position,
+          limit: pageSize
+        })
+      ),
     enabled: Boolean(activeMailboxId)
   })
   const detailQuery = useQuery({
@@ -113,20 +118,35 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
 
   useEffect(() => {
     if (!activeMailboxId && mailboxesQuery.data?.length) {
-      setActiveMailbox(mailboxesQuery.data.find((mailbox) => mailbox.role === 'inbox')?.id ?? mailboxesQuery.data[0]!.id)
+      setActiveMailbox(
+        mailboxesQuery.data.find((mailbox) => mailbox.role === 'inbox')?.id ?? mailboxesQuery.data[0]!.id
+      )
     }
   }, [activeMailboxId, mailboxesQuery.data, setActiveMailbox])
 
-  useEffect(() => {
+  function selectMailbox(mailboxId: string): void {
+    setPosition(0)
+    setActiveMailbox(mailboxId)
+  }
+
+  function applySearch(value: string): void {
     setPosition(0)
     setSelectedEmail(null)
-  }, [activeMailboxId, search, account.id, setSelectedEmail])
+    setSearch(value)
+  }
 
-  const allowRemoteImages = settingsQuery.data?.remoteImages === 'allowed'
-    || (remoteImagesAllowedFor?.accountId === account.id && remoteImagesAllowedFor.emailId === selectedEmailId)
+  const allowRemoteImages =
+    settingsQuery.data?.remoteImages === 'allowed' ||
+    (remoteImagesAllowedFor?.accountId === account.id && remoteImagesAllowedFor.emailId === selectedEmailId)
 
   const actionMutation = useMutation({
-    mutationFn: async ({ emailId, action }: { emailId: string; action: Parameters<typeof window.mailApi.updateEmail>[2] }) => {
+    mutationFn: async ({
+      emailId,
+      action
+    }: {
+      emailId: string
+      action: Parameters<typeof window.mailApi.updateEmail>[2]
+    }) => {
       unwrap(await window.mailApi.updateEmail(account.id, emailId, action))
     },
     onSuccess: async () => {
@@ -140,19 +160,22 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
   })
 
   const saveAttachment = useMutation({
-    mutationFn: async (attachment: EmailDetail['attachments'][number]) => unwrap(await window.mailApi.saveAttachment({
-      accountId: account.id,
-      blobId: attachment.blobId,
-      name: attachment.name,
-      type: attachment.type
-    })),
+    mutationFn: async (attachment: EmailDetail['attachments'][number]) =>
+      unwrap(
+        await window.mailApi.saveAttachment({
+          accountId: account.id,
+          blobId: attachment.blobId,
+          name: attachment.name,
+          type: attachment.type
+        })
+      ),
     onSuccess: (saved) => saved && notify('附件已保存', 'success'),
     onError: (error) => notify(errorMessage(error), 'error')
   })
 
   const selectedMailbox = mailboxesQuery.data?.find((mailbox) => mailbox.id === activeMailboxId)
   const mailDocument = useMemo(
-    () => detailQuery.data ? createMailDocument(detailQuery.data.bodyHtml, allowRemoteImages) : '',
+    () => (detailQuery.data ? createMailDocument(detailQuery.data.bodyHtml, allowRemoteImages) : ''),
     [detailQuery.data, allowRemoteImages]
   )
 
@@ -169,7 +192,10 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
       to: replyAddress?.email ? [replyAddress.email] : [],
       subject,
       html: `<p></p><blockquote>${detail.bodyHtml}</blockquote>`,
-      text: `\n\n${detail.bodyText.split('\n').map((line) => `> ${line}`).join('\n')}`
+      text: `\n\n${detail.bodyText
+        .split('\n')
+        .map((line) => `> ${line}`)
+        .join('\n')}`
     })
   }
 
@@ -193,25 +219,48 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
             onChange={(event) => onAccountChange(event.target.value)}
             aria-label="当前邮箱账号"
           >
-            {accounts.map((item) => <option value={item.id} key={item.id}>{item.displayName} · {item.email}</option>)}
+            {accounts.map((item) => (
+              <option value={item.id} key={item.id}>
+                {item.displayName} · {item.email}
+              </option>
+            ))}
           </select>
         </div>
-        <button className="primary-button mailbox-compose" disabled={!canSubmit} title={canSubmit ? '写邮件' : '此账号没有发信权限'} onClick={() => openCompose()}>
+        <button
+          className="primary-button mailbox-compose"
+          disabled={!canSubmit}
+          title={canSubmit ? '写邮件' : '此账号没有发信权限'}
+          onClick={() => openCompose()}
+        >
           <Send size={17} />
           写邮件
         </button>
         <div className="mailbox-list" aria-label="邮件文件夹">
-          {mailboxesQuery.isPending && <div className="sidebar-loading"><LoaderCircle className="spin" size={18} /></div>}
-          {mailboxesQuery.error && <div className="sidebar-error"><strong>文件夹无法加载</strong><span>{errorMessage(mailboxesQuery.error)}</span><button className="secondary-button" onClick={() => void mailboxesQuery.refetch()}>重试</button></div>}
+          {mailboxesQuery.isPending && (
+            <div className="sidebar-loading">
+              <LoaderCircle className="spin" size={18} />
+            </div>
+          )}
+          {mailboxesQuery.error && (
+            <div className="sidebar-error">
+              <strong>文件夹无法加载</strong>
+              <span>{errorMessage(mailboxesQuery.error)}</span>
+              <button className="secondary-button" onClick={() => void mailboxesQuery.refetch()}>
+                重试
+              </button>
+            </div>
+          )}
           {mailboxesQuery.data?.map((mailbox) => (
             <button
               key={mailbox.id}
               className={`mailbox-row ${mailbox.id === activeMailboxId ? 'active' : ''}`}
-              onClick={() => setActiveMailbox(mailbox.id)}
+              onClick={() => selectMailbox(mailbox.id)}
             >
               {mailboxIcon(mailbox)}
-              <span>{mailbox.role ? roleNames[mailbox.role] ?? mailbox.name : mailbox.name}</span>
-              {mailbox.unreadEmails > 0 && <strong>{mailbox.unreadEmails > 999 ? '999+' : mailbox.unreadEmails}</strong>}
+              <span>{mailbox.role ? (roleNames[mailbox.role] ?? mailbox.name) : mailbox.name}</span>
+              {mailbox.unreadEmails > 0 && (
+                <strong>{mailbox.unreadEmails > 999 ? '999+' : mailbox.unreadEmails}</strong>
+              )}
             </button>
           ))}
         </div>
@@ -224,10 +273,21 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
       <section className="message-pane">
         <div className="message-pane-header">
           <div>
-            <h2>{search ? '搜索结果' : selectedMailbox?.role ? roleNames[selectedMailbox.role] ?? selectedMailbox.name : selectedMailbox?.name ?? '邮件'}</h2>
+            <h2>
+              {search
+                ? '搜索结果'
+                : selectedMailbox?.role
+                  ? (roleNames[selectedMailbox.role] ?? selectedMailbox.name)
+                  : (selectedMailbox?.name ?? '邮件')}
+            </h2>
             <span>{emailsQuery.data?.total ?? selectedMailbox?.totalEmails ?? 0} 封</span>
           </div>
-          <button className="icon-button" title="刷新邮件" onClick={() => void emailsQuery.refetch()} disabled={emailsQuery.isFetching}>
+          <button
+            className="icon-button"
+            title="刷新邮件"
+            onClick={() => void emailsQuery.refetch()}
+            disabled={emailsQuery.isFetching}
+          >
             <RefreshCw className={emailsQuery.isFetching ? 'spin' : ''} size={17} />
           </button>
         </div>
@@ -235,20 +295,53 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
           className="mail-search"
           onSubmit={(event) => {
             event.preventDefault()
-            setSearch(searchDraft.trim())
+            applySearch(searchDraft.trim())
           }}
         >
           <Search size={17} />
-          <input value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} placeholder="搜索邮件" aria-label="搜索邮件" />
+          <input
+            value={searchDraft}
+            onChange={(event) => setSearchDraft(event.target.value)}
+            placeholder="搜索邮件"
+            aria-label="搜索邮件"
+          />
           {searchDraft && (
-            <button type="button" title="清除搜索" onClick={() => { setSearchDraft(''); setSearch('') }}><X size={15} /></button>
+            <button
+              type="button"
+              title="清除搜索"
+              onClick={() => {
+                setSearchDraft('')
+                applySearch('')
+              }}
+            >
+              <X size={15} />
+            </button>
           )}
         </form>
 
         <div className="message-list">
-          {emailsQuery.isPending && activeMailboxId && <div className="center-state"><LoaderCircle className="spin" size={23} /><span>正在同步邮件</span></div>}
-          {emailsQuery.error && <div className="center-state error-state"><MailOpen size={28} /><strong>无法加载邮件</strong><span>{errorMessage(emailsQuery.error)}</span><button className="secondary-button" onClick={() => void emailsQuery.refetch()}>重试</button></div>}
-          {emailsQuery.data?.items.length === 0 && <div className="center-state"><MailOpen size={30} /><strong>{search ? '没有匹配的邮件' : '这里还没有邮件'}</strong></div>}
+          {emailsQuery.isPending && activeMailboxId && (
+            <div className="center-state">
+              <LoaderCircle className="spin" size={23} />
+              <span>正在同步邮件</span>
+            </div>
+          )}
+          {emailsQuery.error && (
+            <div className="center-state error-state">
+              <MailOpen size={28} />
+              <strong>无法加载邮件</strong>
+              <span>{errorMessage(emailsQuery.error)}</span>
+              <button className="secondary-button" onClick={() => void emailsQuery.refetch()}>
+                重试
+              </button>
+            </div>
+          )}
+          {emailsQuery.data?.items.length === 0 && (
+            <div className="center-state">
+              <MailOpen size={30} />
+              <strong>{search ? '没有匹配的邮件' : '这里还没有邮件'}</strong>
+            </div>
+          )}
           {emailsQuery.data?.items.map((email) => {
             const sender = email.from[0]
             const senderName = sender?.name || sender?.email || '未知发件人'
@@ -279,9 +372,25 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
 
         {emailsQuery.data && emailsQuery.data.total > pageSize && (
           <div className="pagination-bar">
-            <button className="icon-button compact" title="上一页" disabled={position === 0} onClick={() => setPosition(Math.max(0, position - pageSize))}><ChevronLeft size={17} /></button>
-            <span>{position + 1}-{Math.min(position + pageSize, emailsQuery.data.total)} / {emailsQuery.data.total}</span>
-            <button className="icon-button compact" title="下一页" disabled={!emailsQuery.data.hasMore} onClick={() => setPosition(position + pageSize)}><ChevronRight size={17} /></button>
+            <button
+              className="icon-button compact"
+              title="上一页"
+              disabled={position === 0}
+              onClick={() => setPosition(Math.max(0, position - pageSize))}
+            >
+              <ChevronLeft size={17} />
+            </button>
+            <span>
+              {position + 1}-{Math.min(position + pageSize, emailsQuery.data.total)} / {emailsQuery.data.total}
+            </span>
+            <button
+              className="icon-button compact"
+              title="下一页"
+              disabled={!emailsQuery.data.hasMore}
+              onClick={() => setPosition(position + pageSize)}
+            >
+              <ChevronRight size={17} />
+            </button>
           </div>
         )}
       </section>
@@ -289,20 +398,56 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
       <section className="reader-pane">
         {!selectedEmailId && (
           <div className="reader-empty">
-            <span className="reader-empty-icon"><MailOpen size={34} /></span>
+            <span className="reader-empty-icon">
+              <MailOpen size={34} />
+            </span>
             <strong>选择一封邮件</strong>
             <span>邮件内容将在这里显示</span>
           </div>
         )}
-        {detailQuery.isPending && selectedEmailId && <div className="center-state fill"><LoaderCircle className="spin" size={23} /><span>正在打开邮件</span></div>}
-        {detailQuery.error && <div className="center-state fill error-state"><MailOpen size={29} /><strong>邮件无法打开</strong><span>{errorMessage(detailQuery.error)}</span></div>}
+        {detailQuery.isPending && selectedEmailId && (
+          <div className="center-state fill">
+            <LoaderCircle className="spin" size={23} />
+            <span>正在打开邮件</span>
+          </div>
+        )}
+        {detailQuery.error && (
+          <div className="center-state fill error-state">
+            <MailOpen size={29} />
+            <strong>邮件无法打开</strong>
+            <span>{errorMessage(detailQuery.error)}</span>
+          </div>
+        )}
         {detailQuery.data && (
           <>
             <div className="reader-toolbar">
               <div className="reader-toolbar-group">
-                <button className="icon-button" title="回复" disabled={!canSubmit} onClick={() => reply(detailQuery.data)}><Reply size={18} /></button>
-                <button className="icon-button" title="转发" disabled={!canSubmit} onClick={() => forward(detailQuery.data)}><Forward size={18} /></button>
-                <button className="icon-button" title={detailQuery.data.isFlagged ? '取消星标' : '添加星标'} onClick={() => actionMutation.mutate({ emailId: detailQuery.data.id, action: { type: 'flagged', value: !detailQuery.data.isFlagged } })}>
+                <button
+                  className="icon-button"
+                  title="回复"
+                  disabled={!canSubmit}
+                  onClick={() => reply(detailQuery.data)}
+                >
+                  <Reply size={18} />
+                </button>
+                <button
+                  className="icon-button"
+                  title="转发"
+                  disabled={!canSubmit}
+                  onClick={() => forward(detailQuery.data)}
+                >
+                  <Forward size={18} />
+                </button>
+                <button
+                  className="icon-button"
+                  title={detailQuery.data.isFlagged ? '取消星标' : '添加星标'}
+                  onClick={() =>
+                    actionMutation.mutate({
+                      emailId: detailQuery.data.id,
+                      action: { type: 'flagged', value: !detailQuery.data.isFlagged }
+                    })
+                  }
+                >
                   <Star size={18} fill={detailQuery.data.isFlagged ? 'currentColor' : 'none'} />
                 </button>
               </div>
@@ -311,31 +456,58 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
                   className="move-select"
                   value=""
                   aria-label="移动邮件"
-                  onChange={(event) => event.target.value && actionMutation.mutate({ emailId: detailQuery.data.id, action: { type: 'move', mailboxId: event.target.value } })}
+                  onChange={(event) =>
+                    event.target.value &&
+                    actionMutation.mutate({
+                      emailId: detailQuery.data.id,
+                      action: { type: 'move', mailboxId: event.target.value }
+                    })
+                  }
                 >
                   <option value="">移动到</option>
-                  {mailboxesQuery.data?.filter((mailbox) => !detailQuery.data.mailboxIds.includes(mailbox.id)).map((mailbox) => <option value={mailbox.id} key={mailbox.id}>{mailbox.role ? roleNames[mailbox.role] ?? mailbox.name : mailbox.name}</option>)}
+                  {mailboxesQuery.data
+                    ?.filter((mailbox) => !detailQuery.data.mailboxIds.includes(mailbox.id))
+                    .map((mailbox) => (
+                      <option value={mailbox.id} key={mailbox.id}>
+                        {mailbox.role ? (roleNames[mailbox.role] ?? mailbox.name) : mailbox.name}
+                      </option>
+                    ))}
                 </select>
-                <button className="icon-button danger-hover" title="移到垃圾箱" onClick={() => actionMutation.mutate({ emailId: detailQuery.data.id, action: { type: 'trash' } })}><Trash2 size={18} /></button>
-                <button className="icon-button" title="更多操作"><MoreHorizontal size={18} /></button>
+                <button
+                  className="icon-button danger-hover"
+                  title="移到垃圾箱"
+                  onClick={() => actionMutation.mutate({ emailId: detailQuery.data.id, action: { type: 'trash' } })}
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button className="icon-button" title="更多操作">
+                  <MoreHorizontal size={18} />
+                </button>
               </div>
             </div>
             <div className="reader-scroll">
               <header className="message-header">
                 <h1>{detailQuery.data.subject}</h1>
                 <div className="message-sender-line">
-                  <span className="sender-avatar large">{addressLabel(detailQuery.data).slice(0, 1).toUpperCase()}</span>
+                  <span className="sender-avatar large">
+                    {addressLabel(detailQuery.data).slice(0, 1).toUpperCase()}
+                  </span>
                   <div>
                     <strong>{addressLabel(detailQuery.data)}</strong>
                     <span>{detailQuery.data.from[0]?.email}</span>
-                    <span>发送给 {detailQuery.data.to.map((address) => address.name || address.email).join('、') || '我'}</span>
+                    <span>
+                      发送给 {detailQuery.data.to.map((address) => address.name || address.email).join('、') || '我'}
+                    </span>
                   </div>
                   <time>{fullTime(detailQuery.data.receivedAt)}</time>
                 </div>
               </header>
 
               {!allowRemoteImages && detailQuery.data.bodyHtml.includes('<img') && (
-                <button className="remote-image-banner" onClick={() => setRemoteImagesAllowedFor({ accountId: account.id, emailId: detailQuery.data.id })}>
+                <button
+                  className="remote-image-banner"
+                  onClick={() => setRemoteImagesAllowedFor({ accountId: account.id, emailId: detailQuery.data.id })}
+                >
                   <span>远程图片已阻止</span>
                   <strong>显示图片</strong>
                 </button>
@@ -348,9 +520,18 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
                   <h3>{detailQuery.data.attachments.length} 个附件</h3>
                   <div className="attachment-list">
                     {detailQuery.data.attachments.map((attachment) => (
-                      <button key={`${attachment.blobId}-${attachment.name}`} className="attachment-row" onClick={() => saveAttachment.mutate(attachment)}>
-                        <span className="attachment-icon"><FileText size={19} /></span>
-                        <span><strong>{attachment.name}</strong><small>{Math.max(1, Math.round(attachment.size / 1024))} KB</small></span>
+                      <button
+                        key={`${attachment.blobId}-${attachment.name}`}
+                        className="attachment-row"
+                        onClick={() => saveAttachment.mutate(attachment)}
+                      >
+                        <span className="attachment-icon">
+                          <FileText size={19} />
+                        </span>
+                        <span>
+                          <strong>{attachment.name}</strong>
+                          <small>{Math.max(1, Math.round(attachment.size / 1024))} KB</small>
+                        </span>
                         <Download size={17} />
                       </button>
                     ))}
@@ -359,8 +540,14 @@ export function MailWorkspace({ account, accounts, onAccountChange }: MailWorksp
               )}
 
               <div className="reader-reply-actions">
-                <button className="secondary-button" disabled={!canSubmit} onClick={() => reply(detailQuery.data)}><Reply size={17} />回复</button>
-                <button className="secondary-button" disabled={!canSubmit} onClick={() => forward(detailQuery.data)}><Forward size={17} />转发</button>
+                <button className="secondary-button" disabled={!canSubmit} onClick={() => reply(detailQuery.data)}>
+                  <Reply size={17} />
+                  回复
+                </button>
+                <button className="secondary-button" disabled={!canSubmit} onClick={() => forward(detailQuery.data)}>
+                  <Forward size={17} />
+                  转发
+                </button>
               </div>
             </div>
           </>

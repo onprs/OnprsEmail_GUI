@@ -20,11 +20,13 @@ export const accountConnectionSchema = z.object({
 
 const registrationCredentialSchema = z.discriminatedUnion('source', [
   z.object({ source: z.literal('saved') }).strict(),
-  z.object({
-    source: z.literal('new'),
-    registrationCode: z.string().trim().min(32, '注册码至少需要 32 个字符').max(4096),
-    remember: z.boolean()
-  }).strict()
+  z
+    .object({
+      source: z.literal('new'),
+      registrationCode: z.string().trim().min(32, '注册码至少需要 32 个字符').max(4096),
+      remember: z.boolean()
+    })
+    .strict()
 ])
 
 export const accountRegistrationSchema = z.object({
@@ -64,7 +66,11 @@ const uploadedAttachmentSchema = z.object({
   blobId: idSchema,
   name: z.string().min(1).max(255),
   type: z.string().min(1).max(255),
-  size: z.number().int().min(0).max(100 * 1024 * 1024)
+  size: z
+    .number()
+    .int()
+    .min(0)
+    .max(100 * 1024 * 1024)
 })
 
 export const composeSchema = z.object({
@@ -116,10 +122,13 @@ export const settingsPatchSchema = z
   })
   .partial()
 
-export const externalUrlSchema = z.string().url().refine((value) => {
-  const protocol = new URL(value).protocol
-  return protocol === 'https:' || protocol === 'http:' || protocol === 'mailto:'
-}, '不支持的链接协议')
+export const externalUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => {
+    const protocol = new URL(value).protocol
+    return protocol === 'https:' || protocol === 'http:' || protocol === 'mailto:'
+  }, '不支持的链接协议')
 
 export const jmapSessionSchema = z.object({
   capabilities: z.record(z.string(), z.unknown()),

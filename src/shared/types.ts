@@ -13,9 +13,7 @@ export interface IpcError {
   retryable: boolean
 }
 
-export type IpcResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: IpcError }
+export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: IpcError }
 
 export interface AccountConnectionInput {
   email: string
@@ -26,8 +24,7 @@ export interface AccountConnectionInput {
 }
 
 export type RegistrationCredentialInput =
-  | { source: 'saved' }
-  | { source: 'new'; registrationCode: string; remember: boolean }
+  { source: 'saved' } | { source: 'new'; registrationCode: string; remember: boolean }
 
 export interface AccountRegistrationInput {
   localPart: string

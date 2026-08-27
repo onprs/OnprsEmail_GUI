@@ -38,13 +38,13 @@ export class SystemService {
     const checks = await Promise.all([
       timedCheck('jmap', 'JMAP 邮件服务', async () => {
         const response = await fetchStatus('https://mail.onprs.online/.well-known/jmap')
-        const session = await response.json() as { capabilities?: Record<string, unknown> }
+        const session = (await response.json()) as { capabilities?: Record<string, unknown> }
         const count = Object.keys(session.capabilities ?? {}).length
         return `已连接，声明 ${count} 项能力`
       }),
       timedCheck('ingress', '全域收件网关', async () => {
         const response = await fetchStatus(new URL('/api/email-ingress/health', `${ingressBase}/`).toString())
-        const payload = await response.json() as { status?: string }
+        const payload = (await response.json()) as { status?: string }
         return payload.status === 'healthy' ? '网关运行正常' : '网关响应异常'
       }),
       timedCheck('webmail', 'SnappyMail 网页邮箱', async () => {
@@ -54,7 +54,10 @@ export class SystemService {
       timedCheck('dns', '域名邮件路由', async () => {
         const records = await resolveMx('onprs.online')
         if (!records.length) throw new Error('未找到 MX 记录')
-        return records.sort((a, b) => a.priority - b.priority).map((record) => record.exchange).join('、')
+        return records
+          .sort((a, b) => a.priority - b.priority)
+          .map((record) => record.exchange)
+          .join('、')
       })
     ])
     return { checkedAt: new Date().toISOString(), checks }

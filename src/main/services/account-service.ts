@@ -52,7 +52,7 @@ function secureOrigin(value: string): URL {
 
 async function parseRegistrationResponse(response: Response): Promise<RegistrationResponse> {
   try {
-    return await response.json() as RegistrationResponse
+    return (await response.json()) as RegistrationResponse
   } catch {
     return {}
   }
@@ -112,7 +112,8 @@ async function requestRegistration(input: RegistrationRequestInput, serverUrl: s
       throw new AppError('REGISTRATION_AUTHORIZATION_FAILED', '注册请求未获授权，请确认注册码后重试')
     }
     if (response.status === 409) throw new AppError('ACCOUNT_NAME_UNAVAILABLE', '这个邮箱地址已被使用')
-    if (response.status === 422) throw new AppError('REGISTRATION_REJECTED', payload.error || '邮箱名或密码不符合服务器要求')
+    if (response.status === 422)
+      throw new AppError('REGISTRATION_REJECTED', payload.error || '邮箱名或密码不符合服务器要求')
     if (response.status === 429) throw new AppError('REGISTRATION_RATE_LIMITED', '创建请求过于频繁，请稍后再试', true)
     if (response.status === 503) {
       if (payload.code === 'registration_commit_unknown') {
@@ -123,7 +124,11 @@ async function requestRegistration(input: RegistrationRequestInput, serverUrl: s
       }
       throw new AppError('REGISTRATION_TEMPORARILY_UNAVAILABLE', '邮箱注册服务暂时不可用，请稍后再试', true)
     }
-    throw new AppError('REGISTRATION_FAILED', payload.error || `邮箱创建失败（HTTP ${response.status}）`, response.status >= 500)
+    throw new AppError(
+      'REGISTRATION_FAILED',
+      payload.error || `邮箱创建失败（HTTP ${response.status}）`,
+      response.status >= 500
+    )
   }
 
   throw new AppError('TOO_MANY_REGISTRATION_REDIRECTS', '注册服务重定向次数过多')
@@ -176,12 +181,15 @@ export class AccountService {
     const expectedEmail = `${input.localPart}@onprs.online`
     let email: string
     try {
-      email = await requestRegistration({
-        localPart: input.localPart,
-        password: input.password,
-        registrationCode: credential.code,
-        displayName: input.displayName
-      }, this.registrationServerUrl)
+      email = await requestRegistration(
+        {
+          localPart: input.localPart,
+          password: input.password,
+          registrationCode: credential.code,
+          displayName: input.displayName
+        },
+        this.registrationServerUrl
+      )
     } catch (error) {
       if (error instanceof AppError && error.code === 'REGISTRATION_CODE_INVALID' && credential.source === 'saved') {
         try {
@@ -201,9 +209,8 @@ export class AccountService {
           const account = await this.connectRegistrationAccount(input, expectedEmail)
           return {
             account,
-            registrationCredentialUpdate: credential.source === 'new' && credential.rememberNewCode
-              ? 'unconfirmed'
-              : 'unchanged'
+            registrationCredentialUpdate:
+              credential.source === 'new' && credential.rememberNewCode ? 'unconfirmed' : 'unchanged'
           }
         } catch {
           // 恢复登录失败时保留原始注册错误，避免把既有他人账号误报为创建成功。
@@ -305,7 +312,9 @@ export class AccountService {
       'verify'
     )
 
-    const existing = this.database.listAccounts().find((account) => account.email.toLowerCase() === input.email.toLowerCase())
+    const existing = this.database
+      .listAccounts()
+      .find((account) => account.email.toLowerCase() === input.email.toLowerCase())
     const now = new Date().toISOString()
     const accountId = existing?.id ?? randomUUID()
     const accountName = client.session.accounts[client.accountId]?.name
@@ -326,13 +335,12 @@ export class AccountService {
     this.database.saveAccount(stored)
     this.memorySecrets.set(accountId, input.password)
     this.authenticationFailures.delete(accountId)
-    this.clients.set(accountId, JmapClient.fromSession(
-      client.session,
-      client.accountId,
-      stored.email,
-      input.password,
-      () => this.markAuthenticationRequired(accountId)
-    ))
+    this.clients.set(
+      accountId,
+      JmapClient.fromSession(client.session, client.accountId, stored.email, input.password, () =>
+        this.markAuthenticationRequired(accountId)
+      )
+    )
     return this.toSummary(stored)
   }
 
@@ -391,12 +399,8 @@ export class AccountService {
       throw new AppError('AUTHENTICATION_REQUIRED', '账号会话数据已损坏，请重新登录', false, { cause: error })
     }
 
-    const client = JmapClient.fromSession(
-      session,
-      account.jmapAccountId,
-      account.email,
-      secret,
-      () => this.markAuthenticationRequired(accountId)
+    const client = JmapClient.fromSession(session, account.jmapAccountId, account.email, secret, () =>
+      this.markAuthenticationRequired(accountId)
     )
     this.clients.set(accountId, client)
     return client

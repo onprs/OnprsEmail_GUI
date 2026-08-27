@@ -93,97 +93,190 @@ function createJmapServer(options: { dropFirstSubmissionResponse?: boolean; drop
     const implicitResponses: unknown[] = []
     const methodResponses = calls.map(([name, args, callId]) => {
       if (name === 'Mailbox/get') {
-        return [name, {
-          accountId: 'account1',
-          state: 'mailbox-1',
-          list: [
-            { id: 'inbox', name: 'Inbox', role: 'inbox', sortOrder: 1, totalEmails: 1, unreadEmails: 1, totalThreads: 1, unreadThreads: 1, isSubscribed: true, myRights: { mayReadItems: true, maySetSeen: true } },
-            { id: 'drafts', name: 'Drafts', role: 'drafts', sortOrder: 2, totalEmails: 0, unreadEmails: 0, totalThreads: 0, unreadThreads: 0, isSubscribed: true, myRights: { mayAddItems: true, mayRemoveItems: true } },
-            { id: 'sent', name: 'Sent', role: 'sent', sortOrder: 3, totalEmails: 0, unreadEmails: 0, totalThreads: 0, unreadThreads: 0, isSubscribed: true, myRights: { mayAddItems: true } },
-            { id: 'trash', name: 'Trash', role: 'trash', sortOrder: 4, totalEmails: 0, unreadEmails: 0, totalThreads: 0, unreadThreads: 0, isSubscribed: true, myRights: { mayAddItems: true } }
-          ]
-        }, callId]
+        return [
+          name,
+          {
+            accountId: 'account1',
+            state: 'mailbox-1',
+            list: [
+              {
+                id: 'inbox',
+                name: 'Inbox',
+                role: 'inbox',
+                sortOrder: 1,
+                totalEmails: 1,
+                unreadEmails: 1,
+                totalThreads: 1,
+                unreadThreads: 1,
+                isSubscribed: true,
+                myRights: { mayReadItems: true, maySetSeen: true }
+              },
+              {
+                id: 'drafts',
+                name: 'Drafts',
+                role: 'drafts',
+                sortOrder: 2,
+                totalEmails: 0,
+                unreadEmails: 0,
+                totalThreads: 0,
+                unreadThreads: 0,
+                isSubscribed: true,
+                myRights: { mayAddItems: true, mayRemoveItems: true }
+              },
+              {
+                id: 'sent',
+                name: 'Sent',
+                role: 'sent',
+                sortOrder: 3,
+                totalEmails: 0,
+                unreadEmails: 0,
+                totalThreads: 0,
+                unreadThreads: 0,
+                isSubscribed: true,
+                myRights: { mayAddItems: true }
+              },
+              {
+                id: 'trash',
+                name: 'Trash',
+                role: 'trash',
+                sortOrder: 4,
+                totalEmails: 0,
+                unreadEmails: 0,
+                totalThreads: 0,
+                unreadThreads: 0,
+                isSubscribed: true,
+                myRights: { mayAddItems: true }
+              }
+            ]
+          },
+          callId
+        ]
       }
       if (name === 'Email/query') {
-        return [name, { accountId: 'account1', queryState: 'query-1', canCalculateChanges: true, position: 0, ids: ['email-1'], total: 1 }, callId]
+        return [
+          name,
+          {
+            accountId: 'account1',
+            queryState: 'query-1',
+            canCalculateChanges: true,
+            position: 0,
+            ids: ['email-1'],
+            total: 1
+          },
+          callId
+        ]
       }
       if (name === 'Email/get') {
         const requestedId = (args.ids as string[] | undefined)?.[0]
         if (requestedId === 'draft-created') {
-          return [name, {
-            accountId: 'account1',
-            state: 'email-2',
-            list: [{ id: 'draft-created', mailboxIds: { drafts: true }, keywords: { '$draft': true } }]
-          }, callId]
-        }
-        return [name, {
-          accountId: 'account1',
-          state: 'email-1',
-          list: [{
-            id: 'email-1',
-            threadId: 'thread-1',
-            mailboxIds: { inbox: true },
-            keywords: {},
-            size: 1024,
-            receivedAt: '2026-08-25T12:00:00Z',
-            sentAt: '2026-08-25T11:59:00Z',
-            from: [{ name: '系统通知', email: 'notice@example.com' }],
-            to: [{ name: '测试用户', email: 'user@onprs.online' }],
-            subject: '欢迎使用 Onprs Mail',
-            preview: '这是一封用于验证桌面客户端完整流程的邮件。',
-            hasAttachment: false,
-            messageId: ['message-1@example.com'],
-            textBody: [{ partId: 'text' }],
-            htmlBody: [{ partId: 'html' }],
-            bodyValues: {
-              text: { value: '邮件正文已通过 JMAP 加载。' },
-              html: { value: '<p><strong>邮件正文</strong>已通过 JMAP 加载。</p>' }
+          return [
+            name,
+            {
+              accountId: 'account1',
+              state: 'email-2',
+              list: [{ id: 'draft-created', mailboxIds: { drafts: true }, keywords: { $draft: true } }]
             },
-            attachments: []
-          }]
-        }, callId]
+            callId
+          ]
+        }
+        return [
+          name,
+          {
+            accountId: 'account1',
+            state: 'email-1',
+            list: [
+              {
+                id: 'email-1',
+                threadId: 'thread-1',
+                mailboxIds: { inbox: true },
+                keywords: {},
+                size: 1024,
+                receivedAt: '2026-08-25T12:00:00Z',
+                sentAt: '2026-08-25T11:59:00Z',
+                from: [{ name: '系统通知', email: 'notice@example.com' }],
+                to: [{ name: '测试用户', email: 'user@onprs.online' }],
+                subject: '欢迎使用 Onprs Mail',
+                preview: '这是一封用于验证桌面客户端完整流程的邮件。',
+                hasAttachment: false,
+                messageId: ['message-1@example.com'],
+                textBody: [{ partId: 'text' }],
+                htmlBody: [{ partId: 'html' }],
+                bodyValues: {
+                  text: { value: '邮件正文已通过 JMAP 加载。' },
+                  html: { value: '<p><strong>邮件正文</strong>已通过 JMAP 加载。</p>' }
+                },
+                attachments: []
+              }
+            ]
+          },
+          callId
+        ]
       }
       if (name === 'Identity/get') {
-        return [name, { accountId: 'account1', state: 'identity-1', list: [{ id: 'identity-1', name: '测试用户', email: 'user@onprs.online' }] }, callId]
+        return [
+          name,
+          {
+            accountId: 'account1',
+            state: 'identity-1',
+            list: [{ id: 'identity-1', name: '测试用户', email: 'user@onprs.online' }]
+          },
+          callId
+        ]
       }
       if (name === 'Email/set') {
         const create = args.create as Record<string, unknown> | undefined
         const createId = create ? Object.keys(create)[0] : undefined
-        return [name, {
-          accountId: 'account1',
-          oldState: 'email-1',
-          newState: 'email-2',
-          created: createId ? { [createId]: { id: 'draft-created' } } : undefined,
-          updated: createId ? undefined : { 'email-1': null }
-        }, callId]
+        return [
+          name,
+          {
+            accountId: 'account1',
+            oldState: 'email-1',
+            newState: 'email-2',
+            created: createId ? { [createId]: { id: 'draft-created' } } : undefined,
+            updated: createId ? undefined : { 'email-1': null }
+          },
+          callId
+        ]
       }
       if (name === 'EmailSubmission/query') {
-        const emailIds = ((args.filter as { emailIds?: string[] } | undefined)?.emailIds ?? [])
-        return [name, {
-          accountId: 'account1',
-          queryState: 'submission-1',
-          canCalculateChanges: false,
-          position: 0,
-          ids: acceptedSubmissionEmailId && emailIds.includes(acceptedSubmissionEmailId) ? ['submission-created'] : []
-        }, callId]
+        const emailIds = (args.filter as { emailIds?: string[] } | undefined)?.emailIds ?? []
+        return [
+          name,
+          {
+            accountId: 'account1',
+            queryState: 'submission-1',
+            canCalculateChanges: false,
+            position: 0,
+            ids: acceptedSubmissionEmailId && emailIds.includes(acceptedSubmissionEmailId) ? ['submission-created'] : []
+          },
+          callId
+        ]
       }
       if (name === 'EmailSubmission/set') {
         const create = args.create as Record<string, { emailId?: string }>
         const createId = Object.keys(create)[0]!
         acceptedSubmissionEmailId = create[createId]?.emailId ?? null
         submissionSetCount += 1
-        implicitResponses.push(['Email/set', {
-          accountId: 'account1',
-          oldState: 'email-2',
-          newState: 'email-3',
-          updated: { 'draft-created': null }
-        }, callId])
-        return [name, {
-          accountId: 'account1',
-          oldState: 'submission-1',
-          newState: 'submission-2',
-          created: { [createId]: { id: 'submission-created' } }
-        }, callId]
+        implicitResponses.push([
+          'Email/set',
+          {
+            accountId: 'account1',
+            oldState: 'email-2',
+            newState: 'email-3',
+            updated: { 'draft-created': null }
+          },
+          callId
+        ])
+        return [
+          name,
+          {
+            accountId: 'account1',
+            oldState: 'submission-1',
+            newState: 'submission-2',
+            created: { [createId]: { id: 'submission-created' } }
+          },
+          callId
+        ]
       }
       return ['error', { type: 'unknownMethod', description: name }, callId]
     })
@@ -205,7 +298,7 @@ function createJmapServer(options: { dropFirstSubmissionResponse?: boolean; drop
       return registrationCount
     },
     async close(): Promise<void> {
-      await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+      await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
     }
   }
 }
@@ -228,7 +321,9 @@ test('在客户端创建邮箱并在响应丢失后恢复自动登录', async ()
     await electronApp.evaluate(({ BrowserWindow }) => {
       BrowserWindow.getAllWindows()[0]?.setSize(1000, 680)
     })
-    const backgroundImage = await page.locator('.account-setup').evaluate((element) => getComputedStyle(element).backgroundImage)
+    const backgroundImage = await page
+      .locator('.account-setup')
+      .evaluate((element) => getComputedStyle(element).backgroundImage)
     expect(backgroundImage).toBe('none')
 
     await page.getByRole('tab', { name: '创建邮箱' }).click()
@@ -239,7 +334,9 @@ test('在客户端创建邮箱并在响应丢失后恢复自动登录', async ()
     await page.getByLabel('确认密码').fill('StrongPassword-1234')
     await page.getByLabel('注册码', { exact: true }).fill(REGISTRATION_CODE)
     await expect(page.getByRole('button', { name: '连接设置' })).not.toBeVisible()
-    const viewportFits = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+    const viewportFits = await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+    )
     expect(viewportFits).toBe(true)
     await mkdir('test-results', { recursive: true })
     await page.screenshot({ path: 'test-results/account-registration.png', fullPage: true })
@@ -275,9 +372,9 @@ test('首次成功后加密保存注册码并在重启后自动使用', async ()
     await page.getByRole('button', { name: '创建并登录' }).click()
     await expect(page.getByRole('button', { name: /收件箱/ })).toBeVisible()
 
-    const localState = await page.evaluate(async () => (
-      window as unknown as { mailApi: DesktopApi }
-    ).mailApi.getRegistrationCredentialStatus())
+    const localState = await page.evaluate(async () =>
+      (window as unknown as { mailApi: DesktopApi }).mailApi.getRegistrationCredentialStatus()
+    )
     expect(localState).toEqual({ ok: true, data: { hasSavedRegistrationCode: true } })
     expect(JSON.stringify(localState)).not.toContain(REGISTRATION_CODE)
 
@@ -306,12 +403,14 @@ test('首次成功后加密保存注册码并在重启后自动使用', async ()
     await expect(page.getByLabel('注册码', { exact: true })).toBeVisible()
     await page.getByTitle('继续使用已保存的注册码').click()
     await expect(page.getByText('已安全保存在此设备')).toBeVisible()
-    page.once('dialog', (dialog) => { void dialog.accept() })
+    page.once('dialog', (dialog) => {
+      void dialog.accept()
+    })
     await page.getByTitle('忘记本机注册码').click()
     await expect(page.getByLabel('注册码', { exact: true })).toBeVisible()
-    const forgottenState = await page.evaluate(async () => (
-      window as unknown as { mailApi: DesktopApi }
-    ).mailApi.getRegistrationCredentialStatus())
+    const forgottenState = await page.evaluate(async () =>
+      (window as unknown as { mailApi: DesktopApi }).mailApi.getRegistrationCredentialStatus()
+    )
     expect(forgottenState).toEqual({ ok: true, data: { hasSavedRegistrationCode: false } })
     await page.getByTitle('关闭').click()
 
@@ -341,7 +440,10 @@ test('完成登录、阅读和发信闭环', async () => {
   const jmapServer = createJmapServer()
   const serverUrl = await jmapServer.listen()
   const userData = await mkdtemp(join(tmpdir(), 'onprs-mail-flow-e2e-'))
-  const electronApp = await electron.launch({ args: ['.'], env: { ...process.env, ONPRS_MAIL_TEST_USER_DATA: userData } })
+  const electronApp = await electron.launch({
+    args: ['.'],
+    env: { ...process.env, ONPRS_MAIL_TEST_USER_DATA: userData }
+  })
 
   try {
     const page = await electronApp.firstWindow()
@@ -369,7 +471,9 @@ test('完成登录、阅读和发信闭环', async () => {
       BrowserWindow.getAllWindows()[0]?.setSize(1000, 680)
     })
     await page.waitForTimeout(200)
-    const viewportFits = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+    const viewportFits = await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+    )
     expect(viewportFits).toBe(true)
 
     await mkdir('test-results', { recursive: true })
@@ -384,7 +488,10 @@ test('提交响应丢失后使用持久化草稿恢复且不重复发信', async
   const jmapServer = createJmapServer({ dropFirstSubmissionResponse: true })
   const serverUrl = await jmapServer.listen()
   const userData = await mkdtemp(join(tmpdir(), 'onprs-mail-recovery-e2e-'))
-  const electronApp = await electron.launch({ args: ['.'], env: { ...process.env, ONPRS_MAIL_TEST_USER_DATA: userData } })
+  const electronApp = await electron.launch({
+    args: ['.'],
+    env: { ...process.env, ONPRS_MAIL_TEST_USER_DATA: userData }
+  })
 
   try {
     const page = await electronApp.firstWindow()

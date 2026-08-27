@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+  NODE_VERSION: '24'
+  NPM_VERSION: '11.16.0'
+
+jobs:
+  quality:
+    name: 质量门禁
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: 配置 Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: 配置 npm
+        run: npm install --global "npm@${{ env.NPM_VERSION }}"
+      - name: 安装依赖
+        run: npm ci
+      - name: 审计生产依赖
+        run: npm run audit:prod
+      - name: 执行质量门禁
+        run: npm run check
+
+  electron-e2e:
+    name: Electron 端到端测试
+    needs: quality
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: 配置 Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: 配置 npm
+        run: npm install --global "npm@${{ env.NPM_VERSION }}"
+      - name: 安装依赖
+        run: npm ci
+      - name: 执行 Electron E2E
+        run: npm run test:e2e
+      - name: 上传失败报告
+        if: failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: electron-e2e-failure
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  packaged-smoke:
+    name: Windows 目录包启动测试
+    if: github.event_name != 'pull_request'
+    needs: electron-e2e
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: 配置 Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: 配置 npm
+        run: npm install --global "npm@${{ env.NPM_VERSION }}"
+      - name: 安装依赖
+        run: npm ci
+      - name: 执行打包后启动测试
+        run: npm run test:e2e:packaged
+      - name: 上传失败报告
+        if: failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: packaged-smoke-failure
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

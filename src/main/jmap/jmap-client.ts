@@ -7,12 +7,15 @@ export type JmapMethodResponse = [name: string, arguments_: unknown, callId: str
 
 export interface JmapSession {
   capabilities: Record<string, unknown>
-  accounts: Record<string, {
-    name?: string
-    isPersonal?: boolean
-    isReadOnly?: boolean
-    accountCapabilities?: Record<string, unknown>
-  }>
+  accounts: Record<
+    string,
+    {
+      name?: string
+      isPersonal?: boolean
+      isReadOnly?: boolean
+      accountCapabilities?: Record<string, unknown>
+    }
+  >
   primaryAccounts: Record<string, string>
   username: string
   apiUrl: string
@@ -86,7 +89,12 @@ export class JmapClient {
   private readonly authHeader: string
   private readonly onAuthenticationRequired?: () => void
 
-  private constructor(session: JmapSession, accountId: string, authHeader: string, onAuthenticationRequired?: () => void) {
+  private constructor(
+    session: JmapSession,
+    accountId: string,
+    authHeader: string,
+    onAuthenticationRequired?: () => void
+  ) {
     this.session = session
     this.accountId = accountId
     this.authHeader = authHeader
@@ -123,8 +131,11 @@ export class JmapClient {
     const session = parsed.data as JmapSession
     secureEndpoint(session.apiUrl)
     const mailCapability = 'urn:ietf:params:jmap:mail'
-    const accountId = session.primaryAccounts[mailCapability]
-      ?? Object.entries(session.accounts).find(([, account]) => Boolean(account.accountCapabilities?.[mailCapability]))?.[0]
+    const accountId =
+      session.primaryAccounts[mailCapability] ??
+      Object.entries(session.accounts).find(([, account]) =>
+        Boolean(account.accountCapabilities?.[mailCapability])
+      )?.[0]
 
     if (!accountId) {
       throw new AppError('MAIL_ACCOUNT_UNAVAILABLE', '该账号没有可用的 JMAP 邮件权限')
@@ -147,7 +158,13 @@ export class JmapClient {
     return Boolean(this.session.accounts[this.accountId]?.accountCapabilities?.[capability])
   }
 
-  async call<T>(using: string[], name: string, arguments_: Record<string, unknown>, callId = 'c1', options: RequestOptions = {}): Promise<T> {
+  async call<T>(
+    using: string[],
+    name: string,
+    arguments_: Record<string, unknown>,
+    callId = 'c1',
+    options: RequestOptions = {}
+  ): Promise<T> {
     const responses = await this.callMany(using, [[name, arguments_, callId]], options)
     const response = responses.find((item) => item[2] === callId)
     if (!response) {
@@ -155,7 +172,11 @@ export class JmapClient {
     }
     if (response[0] === 'error') {
       const details = response[1] as { type?: string; description?: string }
-      throw new AppError(`JMAP_${(details.type ?? 'METHOD_ERROR').toUpperCase()}`, details.description ?? `${name} 执行失败`, details.type === 'serverFail')
+      throw new AppError(
+        `JMAP_${(details.type ?? 'METHOD_ERROR').toUpperCase()}`,
+        details.description ?? `${name} 执行失败`,
+        details.type === 'serverFail'
+      )
     }
     if (response[0] !== name) {
       throw new AppError('JMAP_UNEXPECTED_RESPONSE', `服务器返回了意外的 ${response[0]} 响应`, true)
@@ -163,9 +184,16 @@ export class JmapClient {
     return response[1] as T
   }
 
-  async callMany(using: string[], methodCalls: JmapMethodCall[], options: RequestOptions = {}): Promise<JmapMethodResponse[]> {
+  async callMany(
+    using: string[],
+    methodCalls: JmapMethodCall[],
+    options: RequestOptions = {}
+  ): Promise<JmapMethodResponse[]> {
     const apiUrl = new URL(this.session.apiUrl)
-    if (apiUrl.protocol !== 'https:' && !(apiUrl.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(apiUrl.hostname))) {
+    if (
+      apiUrl.protocol !== 'https:' &&
+      !(apiUrl.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(apiUrl.hostname))
+    ) {
       throw new AppError('INSECURE_API_URL', 'JMAP API 地址不是安全连接')
     }
 
@@ -222,7 +250,7 @@ export class JmapClient {
     if (!response.ok) {
       throw new AppError('ATTACHMENT_UPLOAD_FAILED', `附件 ${name} 上传失败`, response.status >= 500)
     }
-    const result = await parseJson(response) as { blobId?: string; type?: string; size?: number }
+    const result = (await parseJson(response)) as { blobId?: string; type?: string; size?: number }
     if (!result?.blobId) {
       throw new AppError('ATTACHMENT_UPLOAD_INVALID', '附件上传结果不完整')
     }

@@ -26,11 +26,18 @@ describe('JMAP 客户端', () => {
   it('发现账号并完成方法调用', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
-      .mockResolvedValueOnce(new Response(JSON.stringify(session), { status: 200, headers: { 'Content-Type': 'application/json' } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        methodResponses: [['Mailbox/get', { accountId: 'account1', state: '2', list: [] }, 'c1']],
-        sessionState: '1'
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(session), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            methodResponses: [['Mailbox/get', { accountId: 'account1', state: '2', list: [] }, 'c1']],
+            sessionState: '1'
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )
+      )
     vi.stubGlobal('fetch', fetchMock)
 
     const client = await JmapClient.connect('https://mail.onprs.online', 'user@onprs.online', 'secret')
@@ -58,10 +65,12 @@ describe('JMAP 客户端', () => {
   })
 
   it('拒绝携带凭据跨站重定向', async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(null, {
-      status: 307,
-      headers: { Location: 'https://attacker.example/jmap/session' }
-    }))
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(null, {
+        status: 307,
+        headers: { Location: 'https://attacker.example/jmap/session' }
+      })
+    )
     vi.stubGlobal('fetch', fetchMock)
     await expect(JmapClient.connect('https://mail.onprs.online', 'user@onprs.online', 'secret')).rejects.toMatchObject({
       code: 'CROSS_ORIGIN_REDIRECT'
@@ -85,9 +94,14 @@ describe('JMAP 客户端', () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(new Response(JSON.stringify(session), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        methodResponses: [['error', { type: 'forbidden', description: 'No permission' }, 'c1']]
-      }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            methodResponses: [['error', { type: 'forbidden', description: 'No permission' }, 'c1']]
+          }),
+          { status: 200 }
+        )
+      )
     vi.stubGlobal('fetch', fetchMock)
 
     const client = await JmapClient.connect('https://mail.onprs.online', 'user@onprs.online', 'secret')

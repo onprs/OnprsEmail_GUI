@@ -1,6 +1,20 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AtSign, Eye, EyeOff, KeyRound, LoaderCircle, LockKeyhole, Mail, RefreshCw, Server, ShieldCheck, Trash2, UserRound, X } from 'lucide-react'
+import {
+  AtSign,
+  Eye,
+  EyeOff,
+  KeyRound,
+  LoaderCircle,
+  LockKeyhole,
+  Mail,
+  RefreshCw,
+  Server,
+  ShieldCheck,
+  Trash2,
+  UserRound,
+  X
+} from 'lucide-react'
 import type { AccountSummary } from '@shared/types'
 import { UiError, errorMessage, unwrap } from '../lib/api'
 import { useAppStore } from '../store/use-app-store'
@@ -49,8 +63,8 @@ export function AccountSetup({
     queryFn: async () => unwrap(await window.mailApi.getRegistrationCredentialStatus()),
     enabled: mode === 'register'
   })
-  const useStoredRegistrationCode = registrationCredentialQuery.data?.hasSavedRegistrationCode === true
-    && !replaceStoredRegistrationCode
+  const useStoredRegistrationCode =
+    registrationCredentialQuery.data?.hasSavedRegistrationCode === true && !replaceStoredRegistrationCode
 
   function connected(account: AccountSummary): void {
     void queryClient.invalidateQueries({ queryKey: ['accounts'] })
@@ -58,28 +72,33 @@ export function AccountSetup({
   }
 
   const connect = useMutation({
-    mutationFn: async () => unwrap(await window.mailApi.connectAccount({
-      email: email.trim(),
-      password,
-      serverUrl: serverUrl.trim(),
-      displayName: displayName.trim() || undefined,
-      remember
-    })),
+    mutationFn: async () =>
+      unwrap(
+        await window.mailApi.connectAccount({
+          email: email.trim(),
+          password,
+          serverUrl: serverUrl.trim(),
+          displayName: displayName.trim() || undefined,
+          remember
+        })
+      ),
     onSuccess: connected
   })
 
   const register = useMutation({
     mutationFn: async () => {
       if (password !== confirmPassword) throw new Error('两次输入的密码不一致')
-      return unwrap(await window.mailApi.registerAccount({
-        localPart: localPart.trim().toLowerCase(),
-        password,
-        registrationCredential: useStoredRegistrationCode
-          ? { source: 'saved' }
-          : { source: 'new', registrationCode: registrationCode.trim(), remember: rememberRegistrationCode },
-        displayName: displayName.trim() || undefined,
-        remember
-      }))
+      return unwrap(
+        await window.mailApi.registerAccount({
+          localPart: localPart.trim().toLowerCase(),
+          password,
+          registrationCredential: useStoredRegistrationCode
+            ? { source: 'saved' }
+            : { source: 'new', registrationCode: registrationCode.trim(), remember: rememberRegistrationCode },
+          displayName: displayName.trim() || undefined,
+          remember
+        })
+      )
     },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ['registration-credential-status'] })
@@ -112,9 +131,10 @@ export function AccountSetup({
 
   const activeMutation = mode === 'login' ? connect : register
   const isPending = activeMutation.isPending
-  const registrationStatusBlocking = mode === 'register'
-    && !replaceStoredRegistrationCode
-    && (registrationCredentialQuery.isPending || registrationCredentialQuery.isError)
+  const registrationStatusBlocking =
+    mode === 'register' &&
+    !replaceStoredRegistrationCode &&
+    (registrationCredentialQuery.isPending || registrationCredentialQuery.isError)
 
   function switchMode(nextMode: SetupMode): void {
     setMode(nextMode)
@@ -138,7 +158,9 @@ export function AccountSetup({
     <div className={compact ? 'account-setup compact-setup' : 'account-setup'}>
       {!compact && (
         <div className="setup-brand">
-          <span className="brand-mark"><Mail size={25} strokeWidth={1.8} /></span>
+          <span className="brand-mark">
+            <Mail size={25} strokeWidth={1.8} />
+          </span>
           <span>Onprs Mail</span>
         </div>
       )}
@@ -151,8 +173,24 @@ export function AccountSetup({
       >
         {allowRegistration && (
           <div className="setup-mode-switch" role="tablist" aria-label="账号接入方式">
-            <button type="button" role="tab" aria-selected={mode === 'login'} className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>登录</button>
-            <button type="button" role="tab" aria-selected={mode === 'register'} className={mode === 'register' ? 'active' : ''} onClick={() => switchMode('register')}>创建邮箱</button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'login'}
+              className={mode === 'login' ? 'active' : ''}
+              onClick={() => switchMode('login')}
+            >
+              登录
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'register'}
+              className={mode === 'register' ? 'active' : ''}
+              onClick={() => switchMode('register')}
+            >
+              创建邮箱
+            </button>
           </div>
         )}
 
@@ -170,7 +208,9 @@ export function AccountSetup({
 
         {mode === 'login' ? (
           <>
-            <label className="field-label" htmlFor="account-email">邮箱地址</label>
+            <label className="field-label" htmlFor="account-email">
+              邮箱地址
+            </label>
             <div className="input-with-icon">
               <Mail size={17} />
               <input
@@ -187,7 +227,9 @@ export function AccountSetup({
           </>
         ) : (
           <>
-            <label className="field-label" htmlFor="account-local-part">邮箱名</label>
+            <label className="field-label" htmlFor="account-local-part">
+              邮箱名
+            </label>
             <div className="input-with-icon account-name-input">
               <AtSign size={17} />
               <input
@@ -205,15 +247,25 @@ export function AccountSetup({
               <span>@onprs.online</span>
             </div>
 
-            <label className="field-label" htmlFor="registration-display-name">显示名称</label>
+            <label className="field-label" htmlFor="registration-display-name">
+              显示名称
+            </label>
             <div className="input-with-icon">
               <UserRound size={17} />
-              <input id="registration-display-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={120} required />
+              <input
+                id="registration-display-name"
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                maxLength={120}
+                required
+              />
             </div>
           </>
         )}
 
-        <label className="field-label" htmlFor="account-password">密码</label>
+        <label className="field-label" htmlFor="account-password">
+          密码
+        </label>
         <div className="input-with-icon password-input">
           <LockKeyhole size={17} />
           <input
@@ -226,14 +278,21 @@ export function AccountSetup({
             maxLength={mode === 'register' ? 128 : 4096}
             required
           />
-          <button type="button" className="input-action" title={showPassword ? '隐藏密码' : '显示密码'} onClick={() => setShowPassword((value) => !value)}>
+          <button
+            type="button"
+            className="input-action"
+            title={showPassword ? '隐藏密码' : '显示密码'}
+            onClick={() => setShowPassword((value) => !value)}
+          >
             {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
         </div>
 
         {mode === 'register' && (
           <>
-            <label className="field-label" htmlFor="account-confirm-password">确认密码</label>
+            <label className="field-label" htmlFor="account-confirm-password">
+              确认密码
+            </label>
             <div className="input-with-icon">
               <LockKeyhole size={17} />
               <input
@@ -248,12 +307,13 @@ export function AccountSetup({
               />
             </div>
 
-            <label className="field-label" htmlFor="registration-code">注册码</label>
-            {(replaceStoredRegistrationCode || (
-              !registrationCredentialQuery.isPending
-              && !registrationCredentialQuery.isError
-              && !registrationCredentialQuery.data?.hasSavedRegistrationCode
-            )) ? (
+            <label className="field-label" htmlFor="registration-code">
+              注册码
+            </label>
+            {replaceStoredRegistrationCode ||
+            (!registrationCredentialQuery.isPending &&
+              !registrationCredentialQuery.isError &&
+              !registrationCredentialQuery.data?.hasSavedRegistrationCode) ? (
               <>
                 <div className="input-with-icon">
                   <KeyRound size={17} />
@@ -300,10 +360,22 @@ export function AccountSetup({
               <div className="registration-code-error" role="alert">
                 <span>{errorMessage(registrationCredentialQuery.error)}</span>
                 <div>
-                  <button type="button" className="icon-button" title="重新读取注册码" onClick={() => { void registrationCredentialQuery.refetch() }}>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    title="重新读取注册码"
+                    onClick={() => {
+                      void registrationCredentialQuery.refetch()
+                    }}
+                  >
                     <RefreshCw size={16} />
                   </button>
-                  <button type="button" className="icon-button" title="重新输入注册码" onClick={() => setReplaceStoredRegistrationCode(true)}>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    title="重新输入注册码"
+                    onClick={() => setReplaceStoredRegistrationCode(true)}
+                  >
                     <KeyRound size={16} />
                   </button>
                   <button
@@ -325,10 +397,15 @@ export function AccountSetup({
               <div className="registration-code-status">
                 <ShieldCheck size={17} />
                 <span>已安全保存在此设备</span>
-                <button type="button" className="icon-button" title="更换注册码" onClick={() => {
-                  setReplaceStoredRegistrationCode(true)
-                  register.reset()
-                }}>
+                <button
+                  type="button"
+                  className="icon-button"
+                  title="更换注册码"
+                  onClick={() => {
+                    setReplaceStoredRegistrationCode(true)
+                    register.reset()
+                  }}
+                >
                   <RefreshCw size={16} />
                 </button>
                 <button
@@ -342,7 +419,11 @@ export function AccountSetup({
                     }
                   }}
                 >
-                  {forgetRegistrationCredential.isPending ? <LoaderCircle className="spin" size={16} /> : <Trash2 size={16} />}
+                  {forgetRegistrationCredential.isPending ? (
+                    <LoaderCircle className="spin" size={16} />
+                  ) : (
+                    <Trash2 size={16} />
+                  )}
                 </button>
               </div>
             )}
@@ -358,10 +439,25 @@ export function AccountSetup({
 
         {mode === 'login' && advanced && (
           <div className="advanced-fields">
-            <label className="field-label" htmlFor="server-url">服务器地址</label>
-            <input id="server-url" type="url" value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} required />
-            <label className="field-label" htmlFor="display-name">显示名称</label>
-            <input id="display-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={120} />
+            <label className="field-label" htmlFor="server-url">
+              服务器地址
+            </label>
+            <input
+              id="server-url"
+              type="url"
+              value={serverUrl}
+              onChange={(event) => setServerUrl(event.target.value)}
+              required
+            />
+            <label className="field-label" htmlFor="display-name">
+              显示名称
+            </label>
+            <input
+              id="display-name"
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              maxLength={120}
+            />
           </div>
         )}
 
@@ -370,11 +466,25 @@ export function AccountSetup({
           <span>在此设备上记住账号</span>
         </label>
 
-        {activeMutation.error && <div className="form-error" role="alert">{errorMessage(activeMutation.error)}</div>}
+        {activeMutation.error && (
+          <div className="form-error" role="alert">
+            {errorMessage(activeMutation.error)}
+          </div>
+        )}
 
-        <button className="primary-button setup-submit" type="submit" disabled={isPending || registrationStatusBlocking}>
-          {isPending ? <LoaderCircle className="spin" size={17} /> : mode === 'login' ? <LockKeyhole size={17} /> : <Mail size={17} />}
-          {isPending ? (mode === 'login' ? '正在登录' : '正在创建') : (mode === 'login' ? '登录' : '创建并登录')}
+        <button
+          className="primary-button setup-submit"
+          type="submit"
+          disabled={isPending || registrationStatusBlocking}
+        >
+          {isPending ? (
+            <LoaderCircle className="spin" size={17} />
+          ) : mode === 'login' ? (
+            <LockKeyhole size={17} />
+          ) : (
+            <Mail size={17} />
+          )}
+          {isPending ? (mode === 'login' ? '正在登录' : '正在创建') : mode === 'login' ? '登录' : '创建并登录'}
         </button>
       </form>
       {!compact && <div className="setup-footer">JMAP · HTTPS</div>}

@@ -52,7 +52,7 @@ function register<TInput, TOutput>(
   ipcMain.handle(channel, async (event, rawInput: unknown): Promise<IpcResult<TOutput>> => {
     try {
       if (!validateSender(event)) throw new AppError('INVALID_IPC_SENDER', '请求来源不受信任')
-      const input = schema ? schema.parse(rawInput) : rawInput as TInput
+      const input = schema ? schema.parse(rawInput) : (rawInput as TInput)
       return { ok: true, data: await handler(input) }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -74,9 +74,13 @@ export function registerIpcHandlers(services: Services): void {
   register(IPC.accountRegister, accountRegistrationSchema, (input) => services.accounts.register(input))
   register(IPC.accountRegistrationCredentialStatus, null, () => services.accounts.getRegistrationCredentialStatus())
   register(IPC.accountRegistrationCredentialForget, null, () => services.accounts.forgetRegistrationCredential())
-  register(IPC.accountRemove, z.object({ accountId: accountIdSchema }), ({ accountId }) => services.accounts.remove(accountId))
+  register(IPC.accountRemove, z.object({ accountId: accountIdSchema }), ({ accountId }) =>
+    services.accounts.remove(accountId)
+  )
 
-  register(IPC.mailboxList, z.object({ accountId: accountIdSchema }), ({ accountId }) => services.mail.listMailboxes(accountId))
+  register(IPC.mailboxList, z.object({ accountId: accountIdSchema }), ({ accountId }) =>
+    services.mail.listMailboxes(accountId)
+  )
   register(IPC.emailList, emailPageSchema, (input) => services.mail.listEmails(input))
   register(IPC.emailGet, pairSchema, ({ accountId, emailId }) => services.mail.getEmail(accountId, emailId))
   register(
@@ -86,9 +90,13 @@ export function registerIpcHandlers(services: Services): void {
   )
   register(IPC.draftSave, composeSchema, (input) => services.mail.saveDraft(input))
   register(IPC.submissionSend, pairSchema, ({ accountId, emailId }) => services.mail.submitDraft(accountId, emailId))
-  register(IPC.attachmentPick, z.object({ accountId: accountIdSchema }), ({ accountId }) => services.mail.pickAttachments(accountId))
+  register(IPC.attachmentPick, z.object({ accountId: accountIdSchema }), ({ accountId }) =>
+    services.mail.pickAttachments(accountId)
+  )
   register(IPC.attachmentSave, attachmentSaveSchema, (input) => services.mail.saveAttachment(input))
-  register(IPC.identityList, z.object({ accountId: accountIdSchema }), ({ accountId }) => services.mail.listIdentities(accountId))
+  register(IPC.identityList, z.object({ accountId: accountIdSchema }), ({ accountId }) =>
+    services.mail.listIdentities(accountId)
+  )
 
   register(
     IPC.contactList,
@@ -107,11 +115,11 @@ export function registerIpcHandlers(services: Services): void {
   register(IPC.ingressConfigClear, null, () => services.ingress.clearConfiguration())
   register(IPC.ingressList, ingressPageSchema, (input) => services.ingress.listMessages(input))
   register(IPC.ingressGet, z.object({ id: z.number().int().positive() }), ({ id }) => services.ingress.getMessage(id))
-  register(IPC.ingressDelete, z.object({ id: z.number().int().positive() }), ({ id }) => services.ingress.deleteMessage(id))
-  register(
-    IPC.ingressDeleteRecipient,
-    z.object({ recipient: z.email().max(320) }),
-    ({ recipient }) => services.ingress.deleteRecipient(recipient)
+  register(IPC.ingressDelete, z.object({ id: z.number().int().positive() }), ({ id }) =>
+    services.ingress.deleteMessage(id)
+  )
+  register(IPC.ingressDeleteRecipient, z.object({ recipient: z.email().max(320) }), ({ recipient }) =>
+    services.ingress.deleteRecipient(recipient)
   )
   register(
     IPC.ingressAttachmentSave,

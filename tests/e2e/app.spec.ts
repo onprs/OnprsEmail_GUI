@@ -88,9 +88,9 @@ test('创建表单直接反馈字段校验而不是静默禁用按钮', async ()
     await page.getByLabel('注册码', { exact: true }).fill('registration-code-1234567890-abcdef')
     await submit.click()
 
-    const validationMessage = await page.getByLabel('密码', { exact: true }).evaluate(
-      (input: HTMLInputElement) => input.validationMessage
-    )
+    const validationMessage = await page
+      .getByLabel('密码', { exact: true })
+      .evaluate((input: HTMLInputElement) => input.validationMessage)
     expect(validationMessage.length).toBeGreaterThan(0)
     await expect(page.getByRole('heading', { name: '创建邮箱' })).toBeVisible()
   } finally {

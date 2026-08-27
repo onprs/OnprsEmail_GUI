@@ -16,18 +16,24 @@ const composeInput: ComposeInput = {
   attachments: []
 }
 
-function createService(options: {
-  existingSubmission?: boolean
-  cleanupFails?: boolean
-  cleanupAuthenticationRequired?: boolean
-  createFails?: boolean
-  submissionNetworkFailure?: boolean
-  pendingEmailId?: string
-} = {}) {
+function createService(
+  options: {
+    existingSubmission?: boolean
+    cleanupFails?: boolean
+    cleanupAuthenticationRequired?: boolean
+    createFails?: boolean
+    submissionNetworkFailure?: boolean
+    pendingEmailId?: string
+  } = {}
+) {
   let pendingEmailId = options.pendingEmailId ?? null
   const call = vi.fn(async (_using: string[], name: string, args: Record<string, unknown>) => {
     if (name === 'Identity/get') {
-      return { accountId: 'remote-account', state: '1', list: [{ id: 'identity-1', name: 'User', email: 'user@onprs.online' }] }
+      return {
+        accountId: 'remote-account',
+        state: '1',
+        list: [{ id: 'identity-1', name: 'User', email: 'user@onprs.online' }]
+      }
     }
     if (name === 'Mailbox/get') {
       return {
@@ -78,7 +84,7 @@ function createService(options: {
       return {
         accountId: 'remote-account',
         state: '2',
-        list: [{ id: 'pending-draft', mailboxIds: { 'drafts-box': true }, keywords: { '$draft': true } }]
+        list: [{ id: 'pending-draft', mailboxIds: { 'drafts-box': true }, keywords: { $draft: true } }]
       }
     }
     throw new Error(`未处理的方法 ${name}`)
@@ -91,18 +97,26 @@ function createService(options: {
     const create = args.create as Record<string, unknown>
     const createId = Object.keys(create)[0]!
     return [
-      ['EmailSubmission/set', {
-        accountId: 'remote-account',
-        oldState: '1',
-        newState: '2',
-        created: { [createId]: { id: 'submission-1' } }
-      }, callId],
-      ['Email/set', {
-        accountId: 'remote-account',
-        oldState: '2',
-        newState: '3',
-        updated: { 'new-draft': null }
-      }, callId]
+      [
+        'EmailSubmission/set',
+        {
+          accountId: 'remote-account',
+          oldState: '1',
+          newState: '2',
+          created: { [createId]: { id: 'submission-1' } }
+        },
+        callId
+      ],
+      [
+        'Email/set',
+        {
+          accountId: 'remote-account',
+          oldState: '2',
+          newState: '3',
+          updated: { 'new-draft': null }
+        },
+        callId
+      ]
     ]
   })
   const client = {
@@ -115,8 +129,12 @@ function createService(options: {
   const accounts = {
     getClient: () => client,
     getPendingSubmissionEmailId: () => pendingEmailId,
-    savePendingSubmission: (_accountId: string, emailId: string) => { pendingEmailId = emailId },
-    clearPendingSubmission: () => { pendingEmailId = null }
+    savePendingSubmission: (_accountId: string, emailId: string) => {
+      pendingEmailId = emailId
+    },
+    clearPendingSubmission: () => {
+      pendingEmailId = null
+    }
   } as unknown as AccountService
   return { service: new MailService(accounts), call, callMany, getPendingEmailId: () => pendingEmailId }
 }
@@ -186,7 +204,9 @@ describe('MailService 草稿与发信', () => {
   it('响应丢失后的 UI 新草稿参数不会绕过持久化提交恢复', async () => {
     const options = { existingSubmission: false, submissionNetworkFailure: true }
     const { service, callMany, getPendingEmailId } = createService(options)
-    await expect(service.submitDraft('local-account', 'original-draft')).rejects.toMatchObject({ code: 'NETWORK_ERROR' })
+    await expect(service.submitDraft('local-account', 'original-draft')).rejects.toMatchObject({
+      code: 'NETWORK_ERROR'
+    })
     expect(getPendingEmailId()).toBe('original-draft')
 
     options.submissionNetworkFailure = false
@@ -206,12 +226,14 @@ describe('MailService 草稿与发信', () => {
     expect(result).toMatchObject({ emailId: 'pending-draft', submissionId: 'submission-existing', status: 'submitted' })
     expect(callMany).not.toHaveBeenCalled()
     expect(getPendingEmailId()).toBeNull()
-    const archiveUpdate = call.mock.calls.find((item) => item[1] === 'Email/set' && (item[2] as Record<string, unknown>).update)
+    const archiveUpdate = call.mock.calls.find(
+      (item) => item[1] === 'Email/set' && (item[2] as Record<string, unknown>).update
+    )
     expect(archiveUpdate?.[2]).toMatchObject({
       update: {
         'pending-draft': {
           mailboxIds: { 'sent-box': true },
-          keywords: { '$seen': true }
+          keywords: { $seen: true }
         }
       }
     })
@@ -223,23 +245,30 @@ describe('MailService 正文组合', () => {
     const call = vi.fn(async () => ({
       accountId: 'remote-account',
       state: '1',
-      list: [{
-        id: 'email-1',
-        threadId: 'thread-1',
-        mailboxIds: { inbox: true },
-        keywords: {},
-        receivedAt: '2026-08-25T00:00:00Z',
-        textBody: [{ partId: 't1' }, { partId: 't2' }],
-        htmlBody: [{ partId: 'h1' }, { partId: 'h2' }],
-        bodyValues: {
-          t1: { value: '第一段' },
-          t2: { value: '第二段' },
-          h1: { value: '<p>第一段</p>' },
-          h2: { value: '<p>第二段</p>' }
+      list: [
+        {
+          id: 'email-1',
+          threadId: 'thread-1',
+          mailboxIds: { inbox: true },
+          keywords: {},
+          receivedAt: '2026-08-25T00:00:00Z',
+          textBody: [{ partId: 't1' }, { partId: 't2' }],
+          htmlBody: [{ partId: 'h1' }, { partId: 'h2' }],
+          bodyValues: {
+            t1: { value: '第一段' },
+            t2: { value: '第二段' },
+            h1: { value: '<p>第一段</p>' },
+            h2: { value: '<p>第二段</p>' }
+          }
         }
-      }]
+      ]
     }))
-    const client = { accountId: 'remote-account', call, supports: () => true, session: { capabilities: {}, accounts: {} } }
+    const client = {
+      accountId: 'remote-account',
+      call,
+      supports: () => true,
+      session: { capabilities: {}, accounts: {} }
+    }
     const service = new MailService({ getClient: () => client } as unknown as AccountService)
     const detail = await service.getEmail('local-account', 'email-1')
     expect(detail.bodyText).toBe('第一段\n\n第二段')

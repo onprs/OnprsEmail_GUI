@@ -34,26 +34,32 @@ describe('IPC 输入契约', () => {
     expect(valid.success).toBe(true)
     if (valid.success) expect(valid.data).not.toHaveProperty('serverUrl')
 
-    expect(accountRegistrationSchema.safeParse({
-      localPart: 'Admin@onprs.online',
-      password: 'short',
-      registrationCredential: { source: 'new', registrationCode: 'short', remember: true },
-      remember: true
-    }).success).toBe(false)
+    expect(
+      accountRegistrationSchema.safeParse({
+        localPart: 'Admin@onprs.online',
+        password: 'short',
+        registrationCredential: { source: 'new', registrationCode: 'short', remember: true },
+        remember: true
+      }).success
+    ).toBe(false)
 
-    expect(accountRegistrationSchema.safeParse({
-      localPart: 'new.user',
-      password: 'StrongPassword-1234',
-      registrationCredential: { source: 'saved', registrationCode: 'injected-code' },
-      remember: true
-    }).success).toBe(false)
+    expect(
+      accountRegistrationSchema.safeParse({
+        localPart: 'new.user',
+        password: 'StrongPassword-1234',
+        registrationCredential: { source: 'saved', registrationCode: 'injected-code' },
+        remember: true
+      }).success
+    ).toBe(false)
 
-    expect(accountRegistrationSchema.safeParse({
-      localPart: 'new.user',
-      password: 'StrongPassword-1234',
-      registrationCredential: { source: 'saved' },
-      remember: true
-    }).success).toBe(true)
+    expect(
+      accountRegistrationSchema.safeParse({
+        localPart: 'new.user',
+        password: 'StrongPassword-1234',
+        registrationCredential: { source: 'saved' },
+        remember: true
+      }).success
+    ).toBe(true)
   })
 
   it('拒绝公网明文 HTTP 服务', () => {
@@ -74,15 +80,17 @@ describe('IPC 输入契约', () => {
 
   it('限制分页和发件人输入规模', () => {
     expect(ingressPageSchema.safeParse({ limit: 101 }).success).toBe(false)
-    expect(composeSchema.safeParse({
-      accountId: 'a1',
-      to: ['invalid-address'],
-      cc: [],
-      bcc: [],
-      subject: '',
-      text: '',
-      html: '',
-      attachments: []
-    }).success).toBe(false)
+    expect(
+      composeSchema.safeParse({
+        accountId: 'a1',
+        to: ['invalid-address'],
+        cc: [],
+        bcc: [],
+        subject: '',
+        text: '',
+        html: '',
+        attachments: []
+      }).success
+    ).toBe(false)
   })
 })

@@ -1,16 +1,7 @@
 import { existsSync, renameSync } from 'node:fs'
 import { join, normalize, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import {
-  app,
-  BrowserWindow,
-  dialog,
-  nativeTheme,
-  net,
-  protocol,
-  session,
-  shell
-} from 'electron'
+import { app, BrowserWindow, dialog, nativeTheme, net, protocol, session, shell } from 'electron'
 import { AppDatabase } from './storage/database'
 import { CredentialStore } from './storage/credential-store'
 import { AccountService } from './services/account-service'
@@ -74,7 +65,7 @@ function titleBarColors(): { color: string; symbolColor: string } {
 function openApplicationDatabase(filePath: string): AppDatabase {
   try {
     return new AppDatabase(filePath)
-  } catch (error) {
+  } catch {
     const backupBase = `${filePath}.corrupt-${Date.now()}`
     for (const suffix of ['', '-wal', '-shm']) {
       const source = `${filePath}${suffix}`

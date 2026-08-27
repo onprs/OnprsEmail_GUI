@@ -120,7 +120,11 @@ function cleanAddressList(value: EmailAddress[] | undefined): EmailAddress[] {
     .map((address) => ({ name: address.name ?? '', email: address.email }))
 }
 
-function collectBodyValues(parts: JmapBodyPart[] | undefined, values: RawEmail['bodyValues'], separator: string): string {
+function collectBodyValues(
+  parts: JmapBodyPart[] | undefined,
+  values: RawEmail['bodyValues'],
+  separator: string
+): string {
   if (!parts || !values) return ''
   const collected: string[] = []
   const visit = (items: JmapBodyPart[] | undefined): void => {
@@ -167,10 +171,15 @@ function mapAttachment(part: JmapBodyPart): EmailAttachment | null {
 }
 
 function parseSetError(response: SetResponse, kind: 'create' | 'update' | 'destroy'): void {
-  const errors = kind === 'create' ? response.notCreated : kind === 'update' ? response.notUpdated : response.notDestroyed
+  const errors =
+    kind === 'create' ? response.notCreated : kind === 'update' ? response.notUpdated : response.notDestroyed
   const first = errors ? Object.values(errors)[0] : undefined
   if (first) {
-    throw new AppError(`JMAP_SET_${(first.type ?? 'FAILED').toUpperCase()}`, first.description ?? '邮件更新失败', first.type === 'serverFail')
+    throw new AppError(
+      `JMAP_SET_${(first.type ?? 'FAILED').toUpperCase()}`,
+      first.description ?? '邮件更新失败',
+      first.type === 'serverFail'
+    )
   }
 }
 
@@ -179,18 +188,23 @@ export class MailService {
 
   async listMailboxes(accountId: string): Promise<Mailbox[]> {
     const client = this.accounts.getClient(accountId)
-    const response = await client.call<GetResponse<Record<string, unknown>>>(
-      [JMAP_CORE, JMAP_MAIL],
-      'Mailbox/get',
-      {
-        accountId: client.accountId,
-        ids: null,
-        properties: [
-          'id', 'name', 'parentId', 'role', 'sortOrder', 'totalEmails', 'unreadEmails',
-          'totalThreads', 'unreadThreads', 'isSubscribed', 'myRights'
-        ]
-      }
-    )
+    const response = await client.call<GetResponse<Record<string, unknown>>>([JMAP_CORE, JMAP_MAIL], 'Mailbox/get', {
+      accountId: client.accountId,
+      ids: null,
+      properties: [
+        'id',
+        'name',
+        'parentId',
+        'role',
+        'sortOrder',
+        'totalEmails',
+        'unreadEmails',
+        'totalThreads',
+        'unreadThreads',
+        'isSubscribed',
+        'myRights'
+      ]
+    })
 
     return response.list
       .map((item) => ({
@@ -204,13 +218,17 @@ export class MailService {
         totalThreads: typeof item.totalThreads === 'number' ? item.totalThreads : 0,
         unreadThreads: typeof item.unreadThreads === 'number' ? item.unreadThreads : 0,
         isSubscribed: item.isSubscribed !== false,
-        myRights: typeof item.myRights === 'object' && item.myRights ? item.myRights as Record<string, boolean> : {}
+        myRights: typeof item.myRights === 'object' && item.myRights ? (item.myRights as Record<string, boolean>) : {}
       }))
       .sort((a, b) => {
         const roleOrder = ['inbox', 'drafts', 'sent', 'archive', 'junk', 'trash']
         const aRole = a.role ? roleOrder.indexOf(a.role) : roleOrder.length
         const bRole = b.role ? roleOrder.indexOf(b.role) : roleOrder.length
-        return (aRole < 0 ? roleOrder.length : aRole) - (bRole < 0 ? roleOrder.length : bRole) || a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'zh-CN')
+        return (
+          (aRole < 0 ? roleOrder.length : aRole) - (bRole < 0 ? roleOrder.length : bRole) ||
+          a.sortOrder - b.sortOrder ||
+          a.name.localeCompare(b.name, 'zh-CN')
+        )
       })
   }
 
@@ -251,8 +269,18 @@ export class MailService {
         accountId: client.accountId,
         ids: query.ids,
         properties: [
-          'id', 'threadId', 'mailboxIds', 'keywords', 'size', 'receivedAt', 'sentAt',
-          'from', 'to', 'subject', 'preview', 'hasAttachment'
+          'id',
+          'threadId',
+          'mailboxIds',
+          'keywords',
+          'size',
+          'receivedAt',
+          'sentAt',
+          'from',
+          'to',
+          'subject',
+          'preview',
+          'hasAttachment'
         ]
       },
       'get'
@@ -274,22 +302,35 @@ export class MailService {
 
   async getEmail(accountId: string, emailId: string): Promise<EmailDetail> {
     const client = this.accounts.getClient(accountId)
-    const response = await client.call<GetResponse<RawEmail>>(
-      [JMAP_CORE, JMAP_MAIL],
-      'Email/get',
-      {
-        accountId: client.accountId,
-        ids: [emailId],
-        properties: [
-          'id', 'threadId', 'mailboxIds', 'keywords', 'size', 'receivedAt', 'sentAt',
-          'from', 'to', 'cc', 'bcc', 'replyTo', 'subject', 'preview', 'hasAttachment',
-          'messageId', 'textBody', 'htmlBody', 'attachments', 'bodyValues'
-        ],
-        fetchTextBodyValues: true,
-        fetchHTMLBodyValues: true,
-        maxBodyValueBytes: 10_000_000
-      }
-    )
+    const response = await client.call<GetResponse<RawEmail>>([JMAP_CORE, JMAP_MAIL], 'Email/get', {
+      accountId: client.accountId,
+      ids: [emailId],
+      properties: [
+        'id',
+        'threadId',
+        'mailboxIds',
+        'keywords',
+        'size',
+        'receivedAt',
+        'sentAt',
+        'from',
+        'to',
+        'cc',
+        'bcc',
+        'replyTo',
+        'subject',
+        'preview',
+        'hasAttachment',
+        'messageId',
+        'textBody',
+        'htmlBody',
+        'attachments',
+        'bodyValues'
+      ],
+      fetchTextBodyValues: true,
+      fetchHTMLBodyValues: true,
+      maxBodyValueBytes: 10_000_000
+    })
     const raw = response.list[0]
     if (!raw) throw new AppError('EMAIL_NOT_FOUND', '这封邮件已不存在')
     const summary = mapSummary(raw)
@@ -347,11 +388,10 @@ export class MailService {
     if (!client.supports(JMAP_SUBMISSION)) {
       throw new AppError('SUBMISSION_UNAVAILABLE', '该账号没有 JMAP 发信权限')
     }
-    const response = await client.call<GetResponse<RawIdentity>>(
-      [JMAP_CORE, JMAP_SUBMISSION],
-      'Identity/get',
-      { accountId: client.accountId, ids: null }
-    )
+    const response = await client.call<GetResponse<RawIdentity>>([JMAP_CORE, JMAP_SUBMISSION], 'Identity/get', {
+      accountId: client.accountId,
+      ids: null
+    })
     return response.list.map((identity) => ({
       id: identity.id,
       name: identity.name ?? '',
@@ -385,10 +425,15 @@ export class MailService {
     let authenticationRequired = false
     if (input.draftId) {
       try {
-        const cleanup = await client.call<SetResponse>([JMAP_CORE, JMAP_MAIL], 'Email/set', {
-          accountId: client.accountId,
-          destroy: [input.draftId]
-        }, 'cleanup')
+        const cleanup = await client.call<SetResponse>(
+          [JMAP_CORE, JMAP_MAIL],
+          'Email/set',
+          {
+            accountId: client.accountId,
+            destroy: [input.draftId]
+          },
+          'cleanup'
+        )
         if (Object.keys(cleanup.notDestroyed ?? {}).length > 0) cleanupWarning = '新草稿已保存，但旧草稿未能自动清理'
       } catch (error) {
         cleanupWarning = '新草稿已保存，但旧草稿未能自动清理'
@@ -419,12 +464,17 @@ export class MailService {
       throw new AppError('SENT_MAILBOX_UNAVAILABLE', '服务器没有可用的已发送邮箱')
     }
 
-    const existingSubmission = await client.call<QueryResponse>([JMAP_CORE, JMAP_SUBMISSION], 'EmailSubmission/query', {
-      accountId: client.accountId,
-      filter: { emailIds: [pendingEmailId] },
-      position: 0,
-      limit: 1
-    }, 'recover')
+    const existingSubmission = await client.call<QueryResponse>(
+      [JMAP_CORE, JMAP_SUBMISSION],
+      'EmailSubmission/query',
+      {
+        accountId: client.accountId,
+        filter: { emailIds: [pendingEmailId] },
+        position: 0,
+        limit: 1
+      },
+      'recover'
+    )
     if (existingSubmission.ids[0]) {
       const cleanupWarning = await this.archiveSubmittedEmail(client, pendingEmailId, drafts.id, sent.id)
       this.accounts.clearPendingSubmission(accountId)
@@ -441,23 +491,29 @@ export class MailService {
     const submissionKey = `submission-${randomUUID()}`
     const methodCalls = await client.callMany(
       [JMAP_CORE, JMAP_MAIL, JMAP_SUBMISSION],
-      [['EmailSubmission/set', {
-        accountId: client.accountId,
-        create: {
-          [submissionKey]: {
-            identityId: identity.id,
-            emailId: pendingEmailId
-          }
-        },
-        onSuccessUpdateEmail: {
-          [`#${submissionKey}`]: {
-            [`mailboxIds/${drafts.id}`]: null,
-            [`mailboxIds/${sent.id}`]: true,
-            'keywords/$draft': null,
-            'keywords/$seen': true
-          }
-        }
-      }, 'submit']],
+      [
+        [
+          'EmailSubmission/set',
+          {
+            accountId: client.accountId,
+            create: {
+              [submissionKey]: {
+                identityId: identity.id,
+                emailId: pendingEmailId
+              }
+            },
+            onSuccessUpdateEmail: {
+              [`#${submissionKey}`]: {
+                [`mailboxIds/${drafts.id}`]: null,
+                [`mailboxIds/${sent.id}`]: true,
+                'keywords/$draft': null,
+                'keywords/$seen': true
+              }
+            }
+          },
+          'submit'
+        ]
+      ],
       { timeoutMs: 60_000 }
     )
     const primary = methodCalls.find(([name, , callId]) => callId === 'submit' && name !== 'Email/set')
@@ -465,7 +521,11 @@ export class MailService {
     if (primary[0] === 'error') {
       this.accounts.clearPendingSubmission(accountId)
       const details = primary[1] as { type?: string; description?: string }
-      throw new AppError(`JMAP_${(details.type ?? 'SUBMISSION_FAILED').toUpperCase()}`, details.description ?? '邮件提交失败', details.type === 'serverFail')
+      throw new AppError(
+        `JMAP_${(details.type ?? 'SUBMISSION_FAILED').toUpperCase()}`,
+        details.description ?? '邮件提交失败',
+        details.type === 'serverFail'
+      )
     }
     const submission = primary[1] as SetResponse
     try {
@@ -488,9 +548,16 @@ export class MailService {
     return { emailId: pendingEmailId, submissionId, status: 'submitted', cleanupWarning }
   }
 
-  private async archiveSubmittedEmail(client: JmapClient, emailId: string, draftsId: string, sentId: string): Promise<string | undefined> {
+  private async archiveSubmittedEmail(
+    client: JmapClient,
+    emailId: string,
+    draftsId: string,
+    sentId: string
+  ): Promise<string | undefined> {
     try {
-      const email = await client.call<GetResponse<{ id: string; mailboxIds?: Record<string, boolean>; keywords?: Record<string, boolean> }>>(
+      const email = await client.call<
+        GetResponse<{ id: string; mailboxIds?: Record<string, boolean>; keywords?: Record<string, boolean> }>
+      >(
         [JMAP_CORE, JMAP_MAIL],
         'Email/get',
         { accountId: client.accountId, ids: [emailId], properties: ['id', 'mailboxIds', 'keywords'] },
@@ -500,12 +567,17 @@ export class MailService {
       if (!current) return '邮件已发送，但服务端未能找到待归档邮件'
       const mailboxIds = { ...(current.mailboxIds ?? {}), [sentId]: true }
       delete mailboxIds[draftsId]
-      const keywords: Record<string, boolean> = { ...(current.keywords ?? {}), '$seen': true }
+      const keywords: Record<string, boolean> = { ...(current.keywords ?? {}), $seen: true }
       delete keywords.$draft
-      const result = await client.call<SetResponse>([JMAP_CORE, JMAP_MAIL], 'Email/set', {
-        accountId: client.accountId,
-        update: { [emailId]: { mailboxIds, keywords } }
-      }, 'archive-set')
+      const result = await client.call<SetResponse>(
+        [JMAP_CORE, JMAP_MAIL],
+        'Email/set',
+        {
+          accountId: client.accountId,
+          update: { [emailId]: { mailboxIds, keywords } }
+        },
+        'archive-set'
+      )
       parseSetError(result, 'update')
       return undefined
     } catch (error) {
@@ -585,9 +657,11 @@ export class MailService {
       emails: {
         primary: { '@type': 'EmailAddress', address: input.email, contexts: { work: true } }
       },
-      organizations: input.company ? {
-        primary: { '@type': 'Organization', name: input.company }
-      } : {},
+      organizations: input.company
+        ? {
+            primary: { '@type': 'Organization', name: input.company }
+          }
+        : {},
       notes: input.notes ?? ''
     }
 
@@ -597,7 +671,14 @@ export class MailService {
         update: { [input.contactId]: card }
       })
       parseSetError(response, 'update')
-      return { id: input.contactId, addressBookIds: [addressBook.id], name: input.name, emails: [input.email], company: input.company ?? '', notes: input.notes ?? '' }
+      return {
+        id: input.contactId,
+        addressBookIds: [addressBook.id],
+        name: input.name,
+        emails: [input.email],
+        company: input.company ?? '',
+        notes: input.notes ?? ''
+      }
     }
 
     const createKey = `contact-${randomUUID()}`
@@ -608,7 +689,14 @@ export class MailService {
     parseSetError(response, 'create')
     const id = response.created?.[createKey]?.id
     if (!id) throw new AppError('CONTACT_CREATE_FAILED', '服务器没有返回联系人编号')
-    return { id, addressBookIds: [addressBook.id], name: input.name, emails: [input.email], company: input.company ?? '', notes: input.notes ?? '' }
+    return {
+      id,
+      addressBookIds: [addressBook.id],
+      name: input.name,
+      emails: [input.email],
+      company: input.company ?? '',
+      notes: input.notes ?? ''
+    }
   }
 
   async deleteContact(accountId: string, contactId: string): Promise<void> {
@@ -647,11 +735,18 @@ export class MailService {
   }
 
   private mapContact(card: RawContact): Contact {
-    const name = card.name?.full
-      || card.name?.components?.map((component) => component.value ?? '').filter(Boolean).join(' ')
-      || '未命名联系人'
-    const emails = Object.values(card.emails ?? {}).flatMap((email) => email.address ? [email.address] : [])
-    const company = Object.values(card.organizations ?? {}).map((organization) => organization.name ?? '').find(Boolean) ?? ''
+    const name =
+      card.name?.full ||
+      card.name?.components
+        ?.map((component) => component.value ?? '')
+        .filter(Boolean)
+        .join(' ') ||
+      '未命名联系人'
+    const emails = Object.values(card.emails ?? {}).flatMap((email) => (email.address ? [email.address] : []))
+    const company =
+      Object.values(card.organizations ?? {})
+        .map((organization) => organization.name ?? '')
+        .find(Boolean) ?? ''
     return {
       id: card.id,
       addressBookIds: Object.keys(card.addressBookIds ?? {}).filter((id) => card.addressBookIds?.[id]),

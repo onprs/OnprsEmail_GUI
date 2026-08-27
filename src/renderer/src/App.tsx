@@ -55,8 +55,22 @@ export function App(): React.JSX.Element {
       <div className="app-loading error-state">
         <AlertCircle size={28} />
         <strong>应用数据无法读取</strong>
-        <span>{accountsQuery.error instanceof Error ? accountsQuery.error.message : settingsQuery.error instanceof Error ? settingsQuery.error.message : '请重试'}</span>
-        <button className="secondary-button" onClick={() => { void accountsQuery.refetch(); void settingsQuery.refetch() }}>重试</button>
+        <span>
+          {accountsQuery.error instanceof Error
+            ? accountsQuery.error.message
+            : settingsQuery.error instanceof Error
+              ? settingsQuery.error.message
+              : '请重试'}
+        </span>
+        <button
+          className="secondary-button"
+          onClick={() => {
+            void accountsQuery.refetch()
+            void settingsQuery.refetch()
+          }}
+        >
+          重试
+        </button>
       </div>
     )
   }

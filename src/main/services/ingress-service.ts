@@ -183,13 +183,15 @@ export class IngressService {
       if (input.cursor) query.set('cursor', String(input.cursor))
       const response = await this.request(configuration.baseUrl, secret, `/api/email-ingress/v2/messages?${query}`)
       if (!response.ok) throw this.responseError(response)
-      const payload = await response.json() as V2ListResponse
+      const payload = (await response.json()) as V2ListResponse
       const items = (payload.items ?? payload.data ?? []).map(mapSummary)
-      const recipients = (payload.recipients ?? []).map((recipient) => ({
-        address: recipient.address ?? '',
-        count: Number(recipient.count ?? 0),
-        latestAt: Number(recipient.latest_at ?? 0)
-      })).filter((recipient) => recipient.address)
+      const recipients = (payload.recipients ?? [])
+        .map((recipient) => ({
+          address: recipient.address ?? '',
+          count: Number(recipient.count ?? 0),
+          latestAt: Number(recipient.latest_at ?? 0)
+        }))
+        .filter((recipient) => recipient.address)
       return { items, recipients, nextCursor: payload.next_cursor ?? null, apiVersion: 2 }
     }
 
@@ -197,16 +199,20 @@ export class IngressService {
     if (input.recipient) query.set('to', input.recipient)
     const response = await this.request(configuration.baseUrl, secret, `/api/email-ingress/messages?${query}`)
     if (!response.ok) throw this.responseError(response)
-    const payload = await response.json() as { data?: V1Message[] }
+    const payload = (await response.json()) as { data?: V1Message[] }
     let details = (payload.data ?? []).map(mapDetail)
     if (input.search) {
       const search = input.search.toLocaleLowerCase()
-      details = details.filter((message) => `${message.from} ${message.to} ${message.subject} ${message.bodyText}`.toLocaleLowerCase().includes(search))
+      details = details.filter((message) =>
+        `${message.from} ${message.to} ${message.subject} ${message.bodyText}`.toLocaleLowerCase().includes(search)
+      )
     }
     details.forEach((detail) => this.v1Details.set(detail.id, detail))
     const recipients = this.aggregateRecipients(details)
     return {
-      items: details.map(({ bodyText: _bodyText, bodyHtml: _bodyHtml, links: _links, attachments: _attachments, ...summary }) => summary),
+      items: details.map(
+        ({ bodyText: _bodyText, bodyHtml: _bodyHtml, links: _links, attachments: _attachments, ...summary }) => summary
+      ),
       recipients,
       nextCursor: null,
       apiVersion: 1
@@ -219,7 +225,7 @@ export class IngressService {
     if (configuration.apiVersion === 2) {
       const response = await this.request(configuration.baseUrl, secret, `/api/email-ingress/v2/messages/${id}`)
       if (!response.ok) throw this.responseError(response)
-      const payload = await response.json() as { data?: V2Message } & V2Message
+      const payload = (await response.json()) as { data?: V2Message } & V2Message
       return mapDetail(payload.data ?? payload)
     }
     const cached = this.v1Details.get(id)
@@ -236,7 +242,9 @@ export class IngressService {
       throw new AppError('INGRESS_UPGRADE_REQUIRED', '当前服务端仅支持按收件地址清理，请先升级 Ingress v2')
     }
     const secret = this.credentials.decrypt(configuration.encryptedSecret)
-    const response = await this.request(configuration.baseUrl, secret, `/api/email-ingress/v2/messages/${id}`, { method: 'DELETE' })
+    const response = await this.request(configuration.baseUrl, secret, `/api/email-ingress/v2/messages/${id}`, {
+      method: 'DELETE'
+    })
     if (!response.ok) throw this.responseError(response)
   }
 
@@ -244,7 +252,12 @@ export class IngressService {
     const configuration = this.requireConfiguration()
     const secret = this.credentials.decrypt(configuration.encryptedSecret)
     const prefix = configuration.apiVersion === 2 ? '/api/email-ingress/v2/messages' : '/api/email-ingress/messages'
-    const response = await this.request(configuration.baseUrl, secret, `${prefix}?to=${encodeURIComponent(recipient)}`, { method: 'DELETE' })
+    const response = await this.request(
+      configuration.baseUrl,
+      secret,
+      `${prefix}?to=${encodeURIComponent(recipient)}`,
+      { method: 'DELETE' }
+    )
     if (!response.ok) throw this.responseError(response)
   }
 
@@ -267,11 +280,16 @@ export class IngressService {
   async saveRaw(messageId: number, subject: string): Promise<boolean> {
     const configuration = this.requireV2Configuration()
     const secret = this.credentials.decrypt(configuration.encryptedSecret)
-    const response = await this.request(configuration.baseUrl, secret, `/api/email-ingress/v2/messages/${messageId}/raw`, {
-      headers: { Accept: 'message/rfc822' }
-    })
+    const response = await this.request(
+      configuration.baseUrl,
+      secret,
+      `/api/email-ingress/v2/messages/${messageId}/raw`,
+      {
+        headers: { Accept: 'message/rfc822' }
+      }
+    )
     if (!response.ok) throw this.responseError(response)
-    const safeSubject = subject.replace(/[<>:\"/\\|?*\u0000-\u001f]/g, '_').slice(0, 100) || `message-${messageId}`
+    const safeSubject = subject.replace(/[\p{Cc}<>:"/\\|?*]/gu, '_').slice(0, 100) || `message-${messageId}`
     const result = await dialog.showSaveDialog({ title: '保存原始邮件', defaultPath: `${safeSubject}.eml` })
     if (result.canceled || !result.filePath) return false
     await writeFile(result.filePath, Buffer.from(await response.arrayBuffer()))
@@ -302,7 +320,8 @@ export class IngressService {
   }
 
   private responseError(response: Response): AppError {
-    if (response.status === 401 || response.status === 403) return new AppError('INGRESS_AUTHENTICATION_FAILED', '全域收件认证已失效')
+    if (response.status === 401 || response.status === 403)
+      return new AppError('INGRESS_AUTHENTICATION_FAILED', '全域收件认证已失效')
     if (response.status === 404) return new AppError('INGRESS_NOT_FOUND', '全域收件数据不存在')
     return new AppError('INGRESS_HTTP_ERROR', `全域收件请求失败（HTTP ${response.status}）`, response.status >= 500)
   }
